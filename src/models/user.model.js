@@ -13,5 +13,5 @@ module.exports = (mongoose) => {
     )
   );
 
-  return Tutorial;
+  return User ;
 };
