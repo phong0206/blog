@@ -6,11 +6,9 @@ const userServices = require("../services");
 const createUser = async (req, res) => {
   const { username, password } = req.body;
   try {
-    if (!username || !password)
-      return res.status(400).send("Invalid username or password");
+    const user = await userServices.findOne(username);
     if (user) return res.status(400).send("user already exists");
     const hashedPassword = bcrypt.hash(data.password, 10);
-    const user = await userServices.findOne(username);
     password = hashedPassword;
     await user.create(req.body);
   } catch (err) {
@@ -23,9 +21,8 @@ const getAllUser = (req, res) => {
   return res.status(200).json(users);
 };
 
-const getUser = (req, res) => {
-  const id = req.params.id;
-  const user = users.find((user) => user.id === id);
+const getUser = async (req, res) => {
+  const user = await userServices.findOne(username);
   if (!user) {
     return res.status(404).send("User not found");
   }
@@ -41,7 +38,7 @@ const updateUser = (req, res) => {
   const updatedInfoUser = {
     name: req.body.name,
     phonenumber: req.body.phonenumber,
-    birthday: req.body.birthday,
+    age: req.body.age,
   };
   users[index] = updatedInfoUser;
   return res.status(200).json(updatedInfoUser);
