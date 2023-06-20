@@ -45,7 +45,18 @@ const login = async (req, res) => {
   }
 };
 
+const getListUsers = async (req, res) => {
+  try {
+    const response = await userService.findAll(req.query);
+    if (response)
+      return res.status(200).send({ message: "Get all users success", data: response });
+    return res.status(404).send("fail")
+  } catch (err) {console.error(err);
+    return res.status(500).json({ message: err.message });}
+};
+
 module.exports = {
   register,
   login,
+  getListUsers,
 };

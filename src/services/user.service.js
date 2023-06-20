@@ -12,8 +12,8 @@ const findOneById = async (id) => {
   return User.findOne({ id: _id }).lean();
 };
 
-const findAll = async (filter) => {
-  return User.findAll(filter).lean();
+const findAll = async () => {
+  return User.find({}).sort({ createAt: "desc" });
 };
 module.exports = {
   create,

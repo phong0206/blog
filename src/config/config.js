@@ -6,4 +6,5 @@ dotenv.config({ path: path.join(__dirname, "../../.env") });
 module.exports = {
   MONGODB_URL: `mongodb://${process.env.HOST}:${process.env.PORT}/${process.env.DB_NAME}`,
   PORT: parseInt(process.env.PORT, 10) || 8080,
+  SECRET_KEY: process.env.SECRET_KEY,
 };
