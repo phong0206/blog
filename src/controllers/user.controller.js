@@ -1,10 +1,9 @@
 const bcrypt = require("bcryptjs");
 const { userService } = require("../services");
-const { User } = require("../models");
-
+const { passwordUtils } = require("../utils");
 const register = async (req, res) => {
   try {
-    const data = req.body;
+    const data = { ...req.body };
 
     if (!data.username || !data.password) {
       return res.status(400).send("Username or password is not valid");
@@ -14,16 +13,12 @@ const register = async (req, res) => {
       return res.status(400).send("Password or username is too short");
     }
 
-    const user = await userService.findOne({ username: data.username });
+    const user = await userService.findOneByUsername(data.username);
     if (user) {
       return res.status(400).send("User already exists");
     }
 
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-
-    data.password = hashedPassword;
-    // console.log(data.password);
-    // console.log(req.body.password);
+    data.password = passwordUtils.hashPassword(data.password);
 
     await userService.create(data);
     return res.status(200).send("User was created successfully");
@@ -35,10 +30,13 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const data = req.body;
-    const user = await userService.findOne({ username: data.username });
+    const data = { ...req.body };
+    const user = await userService.findOneByUsername(data.username);
     if (!user) return res.status(404).send("User not found");
-    const passwordIsValid = bcrypt.compareSync(data.password, user.password);
+    const passwordIsValid = passwordUtils.comparePassword(
+      data.password,
+      user.password
+    );
     if (!passwordIsValid) return res.status(401).send("Password is not valid");
     return res.status(200).send(user);
   } catch (err) {
