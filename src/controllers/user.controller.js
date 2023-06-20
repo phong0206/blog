@@ -14,18 +14,18 @@ const register = async (req, res) => {
       return res.status(400).send("Password or username is too short");
     }
 
-    const user = await User.findOne({ username: data.username });
+    const user = await userService.findOne({ username: data.username });
     if (user) {
       return res.status(400).send("User already exists");
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    const newUser = new User({
-      username: data.username,
-      password: hashedPassword,
-    });
 
-    await userService.create(newUser);
+    data.password = hashedPassword;
+    // console.log(data.password);
+    // console.log(req.body.password);
+
+    await userService.create(data);
     return res.status(200).send("User was created successfully");
   } catch (err) {
     console.error(err);
@@ -36,10 +36,10 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const data = req.body;
-    const user = await User.findOne({ username: data.username });
+    const user = await userService.findOne({ username: data.username });
     if (!user) return res.status(404).send("User not found");
     const passwordIsValid = bcrypt.compareSync(data.password, user.password);
-    if (!passwordIsValid) return res.status(404).send("Password is not valid");
+    if (!passwordIsValid) return res.status(401).send("Password is not valid");
     return res.status(200).send(user);
   } catch (err) {
     console.error(err);

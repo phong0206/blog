@@ -8,6 +8,9 @@ const findOne = async (filter) => {
   return User.findOne(filter).lean();
 };
 
+const findAll = async (filter) => {
+    return User.findAll(filter).lean();
+}
 module.exports = {
   create,
   findOne,
