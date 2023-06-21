@@ -4,13 +4,13 @@ const { hashPassword, comparePassword } = require("../utils/password.utils");
 const register = async (req, res) => {
   try {
     const data = { ...req.body };
-     if (!data.username || !data.password) {
-       return res.status(400).send("Username or password is not valid");
-     }
+    //  if (!data.username || !data.password) {
+    //    return res.status(400).send("Username or password is not valid");
+    //  }
 
-     if (data.password.length < 6 || data.username.length < 3) {
-       return res.status(400).send("Password or username is too short");
-     }
+    //  if (data.password.length < 6 || data.username.length < 3) {
+    //    return res.status(400).send("Password or username is too short");
+    //  }
     const user = await userService.findOneByUsername(data.username);
     if (user) {
       return res.status(400).send("User already exists");
@@ -43,6 +43,7 @@ const login = async (req, res) => {
 const getListUsers = async (req, res) => {
   try {
     const { query } = req;
+    console.log(query);
     const response = await userService.findAll(query);
     return res.status(200).send({
       message: "Get all users success",
