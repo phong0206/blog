@@ -13,7 +13,7 @@ const findOneById = async (id) => {
 };
 
 const findAll = async () => {
-  return User.find({}).sort({ createAt: "desc" });
+  return User.find({}).lean();
 };
 module.exports = {
   create,
