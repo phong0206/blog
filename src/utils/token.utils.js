@@ -1,5 +1,4 @@
 const jwt = require("jwt");
-const config = require("../config/config");
 exports.generateToken = (id, username, secret) => {
   try {
     const payload = {

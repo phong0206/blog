@@ -12,12 +12,14 @@ const findOneById = async (id) => {
   return User.findOne({ id: _id }).lean();
 };
 
-const findAll = async () => {
-  return User.find({}).lean();
+const findAll = async (res) => {
+  return User.find({}).sort(res);
 };
+
 module.exports = {
   create,
   findOneByUsername,
   findOneById,
   findAll,
+  
 };

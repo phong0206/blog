@@ -35,19 +35,25 @@ const login = async (req, res) => {
 
 const getListUsers = async (req, res) => {
   try {
-    const { query } = req;
-    console.log(query);
-    const response = await userService.findAll(query);
+    const query = req.query.sort;
+    const sortFields = query.split(",");
+    const sortOptions = {};
+    sortFields.forEach((field) => {
+      const sortOrder = field.startsWith("-") ? -1 : 1;
+      const fieldName = field.startsWith("-") ? field.substring(1) : field;
+      sortOptions[fieldName] = sortOrder;
+    });
+    console.log(sortOptions);
+    const response = await userService.findAll(sortOptions);
     return res.status(200).send({
       message: "Get all users success",
-      data: response ?? []
+      data: response ?? [],
     });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: err.message });
   }
 };
-
 
 module.exports = {
   register,
