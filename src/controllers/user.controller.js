@@ -36,14 +36,16 @@ const login = async (req, res) => {
 const getListUsers = async (req, res) => {
   try {
     const query = req.query.sort;
-    const sortFields = query.split(",");
+
+    const sortFields = query ? query.split(",") : [];
     const sortOptions = {};
+
     sortFields.forEach((field) => {
       const sortOrder = field.startsWith("-") ? -1 : 1;
       const fieldName = field.startsWith("-") ? field.substring(1) : field;
       sortOptions[fieldName] = sortOrder;
     });
-    console.log(sortOptions);
+
     const response = await userService.findAll(sortOptions);
     return res.status(200).send({
       message: "Get all users success",
