@@ -1,10 +1,16 @@
-const Joi = require("@hapi/joi");
+const { Joi } = require("express-validation");
 
-const authValidation = Joi.object().keys({
-  username: Joi.string().min(6).max(20).required(),
-  password: Joi.string().min(6).required(),
-});
+exports.login = {
+  body: Joi.object().keys({
+    username: Joi.string().min(6).max(20).required(),
+    password: Joi.string().min(6).required(),
+  }),
+};
 
-module.exports = {
-  authValidation,
+exports.register = {
+  body: Joi.object().keys({
+    username: Joi.string().min(6).max(20).required(),
+    password: Joi.string().min(6).required(),
+    name: Joi.string().min(3).required(),
+  }),
 };

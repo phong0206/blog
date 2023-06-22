@@ -4,13 +4,6 @@ const { hashPassword, comparePassword } = require("../utils/password.utils");
 const register = async (req, res) => {
   try {
     const data = { ...req.body };
-    //  if (!data.username || !data.password) {
-    //    return res.status(400).send("Username or password is not valid");
-    //  }
-
-    //  if (data.password.length < 6 || data.username.length < 3) {
-    //    return res.status(400).send("Password or username is too short");
-    //  }
     const user = await userService.findOneByUsername(data.username);
     if (user) {
       return res.status(400).send("User already exists");

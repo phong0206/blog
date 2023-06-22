@@ -7,4 +7,3 @@ exports.hashPassword = (password) => {
 exports.comparePassword = (reqPassword, userPassword) => {
   return bcrypt.compareSync(reqPassword, userPassword);
 };
-
