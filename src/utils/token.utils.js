@@ -1,6 +1,6 @@
 const jwt = require("jwt");
 const config = require("../config/config");
-const generateToken = (id, username, secret) => {
+exports.generateToken = (id, username, secret) => {
   try {
     const payload = {
       id: id,
@@ -17,7 +17,7 @@ const generateToken = (id, username, secret) => {
   }
 };
 
-const verifyToken = (token, secret) => {
+exports.verifyToken = (token, secret) => {
   try {
     const decoded = jwt.verify(token, secret);
     return decoded;
