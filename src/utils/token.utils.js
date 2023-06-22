@@ -19,7 +19,7 @@ const generateToken = (id, username, secret) => {
 
 const verifyToken = (token, secret) => {
   try {
-    const decoded = jwt.verify(token, "your_secret_key");
+    const decoded = jwt.verify(token, secret);
     return decoded;
   } catch (err) {
     console.error("Error verifying token:", error);
