@@ -1,13 +1,13 @@
-const jwt = require("jwt");
-exports.generateToken = (id, username, secret) => {
+const jwt = require("jsonwebtoken");
+const config = require("../config/config");
+exports.generateToken = (id) => {
   try {
     const payload = {
       id: id,
-      username: username,
     };
     return jwt.sign(
       payload,
-      secret,
+      config.ACCESS_TOKEN_SECRET,
       { expiresIn: "1d" },
       { algorithm: "RS256" }
     );
@@ -16,9 +16,9 @@ exports.generateToken = (id, username, secret) => {
   }
 };
 
-exports.verifyToken = (token, secret) => {
+exports.verifyToken = (token) => {
   try {
-    const decoded = jwt.verify(token, secret);
+    const decoded = jwt.verify(token, config.ACCESS_TOKEN_SECRET);
     return decoded;
   } catch (err) {
     console.error("Error verifying token:", error);

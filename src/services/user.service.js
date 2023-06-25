@@ -9,11 +9,11 @@ const findOneByUsername = async (username) => {
 };
 
 const findOneById = async (id) => {
-  return User.findOne({ id: _id }).lean();
+  return User.findOne({ id: id }).lean();
 };
 
-const findAll = async (res) => {
-  return User.find({}).sort(res);
+const findAll = async (q) => {
+  return User.find({}).sort(q);
 };
 
 module.exports = {
@@ -21,5 +21,4 @@ module.exports = {
   findOneByUsername,
   findOneById,
   findAll,
-  
 };
