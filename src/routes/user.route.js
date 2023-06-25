@@ -9,5 +9,5 @@ router.post("/register", validate(register), userController.register);
 
 router.post("/login", validate(login), userController.login);
 router.get("/", userController.getListUsers);
-router.get("/profile", auth, userController.getProfiles);
-module.exports = router;
+router.get("/profile", auth, userController.getProfile);
+module.exports = router; 

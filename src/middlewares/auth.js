@@ -1,18 +1,18 @@
 const config = require("../config/config");
-const { findOneById } = require("../services/user.service");
+const { findOneById, findOneByUsername } = require("../services/user.service");
 const { verifyToken } = require("../utils/token.utils");
 exports.auth = async (req, res, next) => {
   const authorization = req.headers["authorization"];
-  // console.log(authorization);
   if (!authorization) {
     res.status(403).send({ message: "Token not found." });
   } else {
     try {
       const token = authorization && authorization.split(" ")[1];
       console.log(token);
-      const { id } = await verifyToken(token);
-      console.log("id: " + id);
-      const user = await findOneById(id);
+      const  id = await verifyToken(token);
+      console.log(id);
+      const user = await findOneByUsername(username);
+      console.log(user);
       if (!user) res.status(403).send({ message: "Forbidden" });
       req.user = user;
       next();

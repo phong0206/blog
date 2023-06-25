@@ -29,7 +29,10 @@ const login = async (req, res) => {
     if (!passwordIsValid) return res.status(401).send("Password is not valid");
     const userWithoutPassword = { ...user };
     delete userWithoutPassword.password;
-    const token = await generateToken(user.id);
+    console.log(user._id);
+    const token = await generateToken(user._id);
+    const { id } = verifyToken(token);
+    console.log(id);
     return res.status(200).send({ token: token, profile: userWithoutPassword });
   } catch (err) {
     console.error(err);
@@ -63,12 +66,12 @@ const getListUsers = async (req, res) => {
   }
 };
 
-const getProfiles = (req, res) => {
-  return res.status(200).send(res, "Success", req.user);
+const getProfile = (req, res) => {
+  return res.status(200).send({ message: "success", profile: req.user });
 };
 module.exports = {
   register,
   login,
   getListUsers,
-  getProfiles,
+  getProfile,
 };
