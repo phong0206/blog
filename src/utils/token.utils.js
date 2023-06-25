@@ -5,7 +5,7 @@ exports.generateToken = (id) => {
     const payload = {
       id: id,
     };
-    console.log(payload );
+    console.log(payload);
     return jwt.sign(
       payload,
       config.ACCESS_TOKEN_SECRET,

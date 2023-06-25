@@ -21,7 +21,7 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { authorization } = req.headers;
-    console.log(authorization);
+
     const data = { ...req.body };
     const user = await userService.findOneByUsername(data.username);
     if (!user) return res.status(404).send("User not found");
@@ -29,10 +29,7 @@ const login = async (req, res) => {
     if (!passwordIsValid) return res.status(401).send("Password is not valid");
     const userWithoutPassword = { ...user };
     delete userWithoutPassword.password;
-    console.log(user._id);
     const token = await generateToken(user._id);
-    const { id } = verifyToken(token);
-    console.log(id);
     return res.status(200).send({ token: token, profile: userWithoutPassword });
   } catch (err) {
     console.error(err);
