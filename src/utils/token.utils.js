@@ -5,7 +5,6 @@ exports.generateToken = (id) => {
     const payload = {
       id: id,
     };
-    
     return jwt.sign(
       payload,
       config.ACCESS_TOKEN_SECRET,
@@ -20,7 +19,6 @@ exports.generateToken = (id) => {
 exports.verifyToken = (token) => {
   try {
     const decoded = jwt.verify(token, config.ACCESS_TOKEN_SECRET);
-    // console.log(decoded);
     return decoded;
   } catch (err) {
     console.error("Error verifying token:", err);

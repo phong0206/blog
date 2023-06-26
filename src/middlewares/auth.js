@@ -6,15 +6,12 @@ exports.auth = async (req, res, next) => {
   if (!authorization) {
     return res.status(403).send({ message: "Token not found." });
   }
-
   try {
     const token = authorization.split(" ")[1];
     const { id } = await verifyToken(token);
-    console.log(id)
     if (!id) {
       return res.status(403).send({ message: "User ID not found in token." });
     }
-    
     req.id = id;
     next();
   } catch (error) {
@@ -22,4 +19,3 @@ exports.auth = async (req, res, next) => {
     res.status(403).send({ message: error.message });
   }
 };
-

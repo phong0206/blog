@@ -65,12 +65,9 @@ const getListUsers = async (req, res) => {
 
 const getProfile = async (req, res) => {
   const user = await userService.findOneById?.(req.id);
-  console.log(user);
-
   if (!user) {
     return res.status(403).send({ message: "Forbidden" });
   }
-
   req.user = user;
   return res.status(200).send({ message: "success", profile: req.user });
 };

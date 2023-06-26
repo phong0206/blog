@@ -6,7 +6,6 @@ const { auth } = require("../middlewares/auth");
 const router = express.Router();
 
 router.post("/register", validate(register), userController.register);
-
 router.post("/login", validate(login), userController.login);
 router.get("/", auth, userController.getListUsers);
 router.get("/profile", auth, userController.getProfile);
