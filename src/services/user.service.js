@@ -1,20 +1,12 @@
 const { User } = require("../models");
 
-const create = async (data) => {
-  return User.create(data);
-};
+const create = async (data) => User.create(data);
 
-const findOneByUsername = async (username) => {
-  return User.findOne({ username }).lean();
-};
+const findOneByUsername = async (username) => User.findOne({ username }).lean();
 
-const findOneById = async (id) => {
-  return User.findOne({ id: id }).lean();
-};
+const findOneById = async (userId) => User.findById(userId);
 
-const findAll = async (q) => {
-  return User.find({}).sort(q);
-};
+const findAll = async (q) => User.find({}).sort(q);
 
 module.exports = {
   create,

@@ -5,23 +5,24 @@ exports.generateToken = (id) => {
     const payload = {
       id: id,
     };
-    console.log(payload);
+    
     return jwt.sign(
       payload,
       config.ACCESS_TOKEN_SECRET,
-      { expiresIn: "1d" },
+      { expiresIn: "3d" },
       { algorithm: "RS256" }
     );
   } catch (err) {
-    console.error("Error generating token:", error);
+    console.error("Error generating token:", err);
   }
 };
 
 exports.verifyToken = (token) => {
   try {
     const decoded = jwt.verify(token, config.ACCESS_TOKEN_SECRET);
+    // console.log(decoded);
     return decoded;
   } catch (err) {
-    console.error("Error verifying token:", error);
+    console.error("Error verifying token:", err);
   }
 };
