@@ -29,6 +29,9 @@ const User = mongoose.Schema(
       },
     },
     age: { type: Number, min: [6, "Age must be at least 6"], max: 100 },
+    refreshToken: {
+      type: String,
+    },
   },
   {
     timestamps: true,

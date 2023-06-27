@@ -1,14 +1,31 @@
 const jwt = require("jsonwebtoken");
 const config = require("../config/config");
-exports.generateToken = (id) => {
+const { saveRefreshTokenToUser } = require("../services/user.service");
+exports.generateRefreshToken = (id) => {
   try {
-    const payload = {
-      id: id,
-    };
+    const refreshToken = jwt.sign(
+      {
+        id: id,
+      },
+      config.REFRESH_TOKEN_SECRET,
+      { expiresIn: "7d" },
+      { algorithm: "RS256" }
+    );
+    saveRefreshTokenToUser(id, refreshToken);
+    return refreshToken;
+  } catch (err) {
+    console.error("Error generating token:", err);
+  }
+};
+
+exports.generateAccessToken = (id) => {
+  try {
     return jwt.sign(
-      payload,
+      {
+        id: id,
+      },
       config.ACCESS_TOKEN_SECRET,
-      { expiresIn: "3d" },
+      { expiresIn: "1m" },
       { algorithm: "RS256" }
     );
   } catch (err) {
@@ -16,9 +33,9 @@ exports.generateToken = (id) => {
   }
 };
 
-exports.verifyToken = (token) => {
+exports.verifyToken = (token, secret) => {
   try {
-    const decoded = jwt.verify(token, config.ACCESS_TOKEN_SECRET);
+    const decoded = jwt.verify(token, secret);
     return decoded;
   } catch (err) {
     console.error("Error verifying token:", err);

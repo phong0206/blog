@@ -1,5 +1,6 @@
 const config = require("../config/config");
-const { findOneById, findOneByUsername } = require("../services/user.service");
+const jwt = require("jsonwebtoken");
+const { findOneById } = require("../services/user.service");
 const { verifyToken } = require("../utils/token.utils");
 exports.auth = async (req, res, next) => {
   const authorization = req.headers.authorization;
@@ -8,11 +9,15 @@ exports.auth = async (req, res, next) => {
   }
   try {
     const token = authorization.split(" ")[1];
-    const { id } = await verifyToken(token);
+    const { id } = await verifyToken(token, config.ACCESS_TOKEN_SECRET);
     if (!id) {
       return res.status(403).send({ message: "User ID not found in token." });
     }
-    req.id = id;
+    const user = await findOneById(id);
+    if (!user) {
+      return res.status(403).send({ message: "Forbidden" });
+    }
+    req.user = user;
     next();
   } catch (error) {
     console.error(error);

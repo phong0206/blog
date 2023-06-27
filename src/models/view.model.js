@@ -10,7 +10,7 @@ const View = mongoose.Schema(
       type: String,
       required: true,
     },
-    blogId: { type: mongoose.Schema.Types.ObjectId, ref: "blog" },
+    blogId: { type: mongoose.Schema.Types.ObjectId },
   },
   {
     timestamps: true,
