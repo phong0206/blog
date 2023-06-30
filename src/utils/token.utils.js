@@ -8,7 +8,7 @@ exports.generateAccessToken = (id) => {
         id: id,
       },
       config.ACCESS_TOKEN_SECRET,
-      { expiresIn: "1m" },
+      { expiresIn: "1h" },
       { algorithm: "RS256" }
     );
   } catch (err) {

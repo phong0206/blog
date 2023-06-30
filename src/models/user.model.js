@@ -21,12 +21,6 @@ const User = mongoose.Schema(
     },
     phonenumber: {
       type: String,
-      validate: {
-        validator: (v) => {
-          return /((09|03|07|08|05)+([0-9]{8})\b)/g.test(v);
-        },
-        message: "Phone number is not a valid",
-      },
     },
     age: { type: Number, min: [6, "Age must be at least 6"], max: 100 },
   },
