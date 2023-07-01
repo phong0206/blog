@@ -8,7 +8,7 @@ const findOneById = async (userId) => User.findById(userId);
 
 const findAll = async (f, q, k, l) => User.find(f).sort(q).skip(k).limit(l);
 
-const deleteAllUser = async () => User.deleteMany({});
+const deleteAllUsers = async () => User.deleteMany({});
 
 const countDocuments = async () => User.countDocuments();
 
@@ -18,7 +18,7 @@ module.exports = {
   findOneByUsername,
   findOneById,
   findAll,
-  deleteAllUser,
+  deleteAllUsers,
   countDocuments,
   deleteOneById,
 };

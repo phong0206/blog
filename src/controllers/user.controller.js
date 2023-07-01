@@ -46,6 +46,9 @@ const deleteAllUsers = async (req, res, next) => {
   try {
     await userService.deleteAllUsers();
     console.log("Deleted all users successfully");
+    return res
+      .status(200)
+      .json({ message: "Successfully deleted all users successfully" });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: err.message });
@@ -193,7 +196,7 @@ const getProfile = async (req, res) => {
 
 const fakeUser = (req, res) => {
   const arrNewUser = [];
-  for (let i = 0; i < 200; i++) {
+  for (let i = 0; i < 30; i++) {
     const newUser = new User();
     newUser.username = faker.internet.userName();
     password = faker.internet.password();

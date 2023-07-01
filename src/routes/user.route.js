@@ -7,11 +7,11 @@ const router = express.Router();
 
 router.post("/register", validate(register), userController.register);
 router.post("/login", validate(login), userController.login);
-router.get("/get", userController.getListUsers);
+router.get("/get-all-user", userController.getListUsers);
 router.get("/profile", auth, userController.getProfile);
-router.get("/fakeuser", userController.fakeUser);
-router.get("/deleteAllUser", userController.deleteAllUsers);
-router.post("/createUser", userController.createUser);
-router.get("/delete/:id", userController.deleteUser);
+router.post("/fake-user", userController.fakeUser);
+router.delete("/delete-all-user", userController.deleteAllUsers);
+router.post("/create-user", userController.createUser);
+router.delete("/delete/:id", userController.deleteUser);
 router.put("/update/:id", userController.updateUser);
 module.exports = router;
