@@ -115,15 +115,20 @@ exports.deleteBlog = async (req, res, next) => {
   }
 };
 
-exports.updateBlog = async (req, res, next) => {
+exports.detailBlog = async (req, res, next) => {
+  const { blogId } = req.params;
   try {
+    const blog = await Blog.findById(blogId);
+    return res
+      .status(200)
+      .send({ message: "get detail blog successfully", detail: blog });
   } catch (e) {
     console.error(e);
     return res.send(e.message);
   }
 };
 
-exports.detailBlog = async (req, res, next) => {
+exports.updateBlog = async (req, res, next) => {
   try {
   } catch (e) {
     console.error(e);
