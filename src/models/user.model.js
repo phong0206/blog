@@ -4,11 +4,11 @@ const User = mongoose.Schema(
   {
     username: {
       type: String,
-      minlength: [6, "Username must be at least 6 characters long"],
+     
       required: true,
       unique: true,
       alphanumeric: true,
-      maxlength: [20, "Max length"],
+      
     },
     password: {
       type: String,

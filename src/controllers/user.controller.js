@@ -44,8 +44,55 @@ const login = async (req, res) => {
 
 const deleteAllUsers = async (req, res, next) => {
   try {
-    await User.deleteMany({});
-    console.log("Đã xóa tất cả người dùng thành công.");
+    await userService.deleteAllUsers();
+    console.log("Deleted all users successfully");
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+const createUser = async (req, res, next) => {
+  try {
+    const newUser = req.body;
+    const isUser = await userService.findOneByUsername(newUser.username);
+    if (isUser) return res.status(400).send({ message: "User does exist" });
+    newUser.password = hashPassword(newUser.password);
+    userService.create(newUser);
+    return res
+      .status(200)
+      .json({ message: "User created successfully", profile: newUser });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+const updateUser = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+    const isId = await userService.findOneById(id);
+    if (!isId) {
+      return res.status(400).send({ message: "User does not exist" });
+    }
+    await User.findByIdAndUpdate(id, data, { new: true });
+    return res.status(200).send({ message: "User updated successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+const deleteUser = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const isId = await userService.findOneById(id);
+    if (!isId) {
+      return res.status(400).send({ message: "User does not exist" });
+    }
+    await User.findByIdAndDelete(id, { new: true });
+    return res.status(200).send({ message: "User deleted successfully" });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: err.message });
@@ -53,20 +100,17 @@ const deleteAllUsers = async (req, res, next) => {
 };
 
 const getListUsers = async (req, res, next) => {
-  const usersPerPage = req.query.limit; // number of users displayed on one page
+  const usersPerPage = req.query.limit;
   let currentPage = req.query.currentPage || 1;
-
   try {
     const sort = parseSortQuery(req.query.sort);
-    const filteredUsers = await parseFindQuery(req);
-    console.log(filteredUsers);
-    const totalCount = await User.countDocuments(); // get total count of users
+    const filteredUsers = parseFindQuery(req);
+    const totalCount = await userService.countDocuments();
     const totalPages = Math.ceil(totalCount / usersPerPage);
     if (currentPage < 1 || currentPage > totalPages) {
       return res.status(400).send("Invalid page");
     }
-
-    const skipUsers = usersPerPage * (currentPage - 1); // calculate number of users to skip
+    const skipUsers = usersPerPage * (currentPage - 1);
     const users = await userService.findAll(
       filteredUsers,
       sort,
@@ -85,73 +129,71 @@ const getListUsers = async (req, res, next) => {
   }
 };
 
-const parseFindQuery = async (req, res) => {
+const parseFindQuery = (req, res) => {
   try {
     const { name, age, username } = req.query;
-
     const lowercaseName = name ? name.toLowerCase() : "";
     const query = {};
 
-    if (lowercaseName) {
+    if (name) {
       query.name = { $regex: lowercaseName, $options: "i" };
     }
 
     if (age) {
       query.age = {};
-
+      if (req.query.age) {
+        query.age = req.query.age;
+      }
       if (req.query.age.lt) {
         query.age.$lt = parseInt(req.query.age.lt);
       }
-
       if (req.query.age.gt) {
         query.age.$gt = parseInt(req.query.age.gt);
       }
-
       if (req.query.age.gte) {
         query.age.$gte = parseInt(req.query.age.gte);
       }
-
       if (req.query.age.lte) {
         query.age.$lte = parseInt(req.query.age.lte);
       }
-
       if (req.query.age.ne) {
         query.age.$ne = parseInt(req.query.age.ne);
       }
     }
-
     if (username) {
       query.username = username;
     }
-
     return query;
   } catch (error) {
     console.error("Error finding users:", error);
-    throw error; // Propagate the error to the caller
+    throw error;
   }
 };
 
 const parseSortQuery = (sortQuery) => {
   const sort = {};
-
   if (sortQuery) {
     const sortKeys = Array.isArray(sortQuery) ? sortQuery : [sortQuery];
-
     sortKeys.forEach((key) => {
       const [field, order] = key.split(":");
       sort[field] = order || 1;
     });
   }
-
   return sort;
 };
 
 const getProfile = async (req, res) => {
-  return res.status(200).send({ message: "success", profile: req.user });
+  const user = req.user;
+  const userWithoutPassword = { ...user._doc };
+  delete userWithoutPassword.password;
+  return res
+    .status(200)
+    .send({ message: "success", profile: userWithoutPassword });
 };
 
-const fakeUser = async (req, res) => {
-  for (let i = 0; i < 50; i++) {
+const fakeUser = (req, res) => {
+  const arrNewUser = [];
+  for (let i = 0; i < 200; i++) {
     const newUser = new User();
     newUser.username = faker.internet.userName();
     password = faker.internet.password();
@@ -159,9 +201,10 @@ const fakeUser = async (req, res) => {
     newUser.age = faker.number.int({ min: 10, max: 60 });
     newUser.name = faker.person.fullName({ min: 3 });
     newUser.phonenumber = faker.phone.imei();
-    console.log(newUser);
-    User.create(newUser);
+    arrNewUser.push(newUser);
   }
+  User.insertMany(arrNewUser);
+  return res.status(200).send("success");
 };
 module.exports = {
   register,
@@ -170,4 +213,7 @@ module.exports = {
   getProfile,
   fakeUser,
   deleteAllUsers,
+  createUser,
+  updateUser,
+  deleteUser,
 };
