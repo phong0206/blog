@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const View = mongoose.Schema(
   {
-    viewAmount: {
+    amount: {
       type: Number,
       required: true,
     },
