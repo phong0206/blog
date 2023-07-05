@@ -1,24 +1,27 @@
 const { User } = require("../models");
 
-const create = async (data) => User.create(data);
+exports.create = async (data) => User.create(data);
 
-const findOneByUsername = async (username) => User.findOne({ username }).lean();
+exports.findOneByUsername = async (username) =>
+  User.findOne({ username }).lean();
 
-const findOneById = async (userId) => User.findById(userId);
+exports.findOneById = async (userId) => User.findById(userId);
 
-const findAll = async (f, q, k, l) => User.find(f).sort(q).skip(k).limit(l);
 
-const deleteAllUsers = async () => User.deleteMany({});
+exports.findAll = async (f, q, k, l) => User.find(f).sort(q).skip(k).limit(l);
 
-const countDocuments = async () => User.countDocuments();
+exports.deleteAllUsers = async () => User.deleteMany({});
 
-const deleteOneById = async (userId) => User.findByIdAndDelete(userId);
-module.exports = {
-  create,
-  findOneByUsername,
-  findOneById,
-  findAll,
-  deleteAllUsers,
-  countDocuments,
-  deleteOneById,
-};
+exports.countDocuments = async () => User.countDocuments();
+
+exports.deleteOneById = async (userId) => User.findByIdAndDelete(userId);
+
+exports.updateById = async (userId, data) =>
+  User.findByIdAndUpdate(userId, data, { new: true });
+
+exports.deleteById = async (userId) =>
+  User.findByIdAndDelete(userId, { new: true });
+
+exports.insertMany = async (data) => User.insertMany(data, { new: true });
+
+exports.getAllUsers = async () => User.find()

@@ -1,11 +1,10 @@
 const bcrypt = require("bcryptjs");
 const { userService } = require("../services");
-const jwt = require("jsonwebtoken");
-const config = require("../config/config");
 const { hashPassword, comparePassword } = require("../utils/password.utils");
-const { generateAccessToken, verifyToken } = require("../utils/token.utils");
+const { generateAccessToken } = require("../utils/token.utils");
 const { faker } = require("@faker-js/faker");
-const { User } = require("../models");
+const { parseFindQueryUser, parseSortQuery } = require("../utils/query.utils");
+
 const register = async (req, res) => {
   try {
     const data = { ...req.body };
@@ -42,10 +41,9 @@ const login = async (req, res) => {
   }
 };
 
-const deleteAllUsers = async (req, res, next) => {
+const deleteAllUsers = async (res, next) => {
   try {
     await userService.deleteAllUsers();
-    console.log("Deleted all users successfully");
     return res
       .status(200)
       .json({ message: "Successfully deleted all users successfully" });
@@ -79,7 +77,7 @@ const updateUser = async (req, res, next) => {
     if (!isId) {
       return res.status(400).send({ message: "User does not exist" });
     }
-    await User.findByIdAndUpdate(id, data, { new: true });
+    await userService.updateById(id, data);
     return res.status(200).send({ message: "User updated successfully" });
   } catch (err) {
     console.error(err);
@@ -94,7 +92,7 @@ const deleteUser = async (req, res, next) => {
     if (!isId) {
       return res.status(400).send({ message: "User does not exist" });
     }
-    await User.findByIdAndDelete(id, { new: true });
+    await userService.deleteById(id);
     return res.status(200).send({ message: "User deleted successfully" });
   } catch (err) {
     console.error(err);
@@ -107,7 +105,7 @@ const getListUsers = async (req, res, next) => {
   let currentPage = req.query.currentPage || 1;
   try {
     const sort = parseSortQuery(req.query.sort);
-    const filteredUsers = parseFindQuery(req);
+    const filteredUsers = parseFindQueryUser(req);
     const totalCount = await userService.countDocuments();
     const totalPages = Math.ceil(totalCount / usersPerPage);
     if (currentPage < 1 || currentPage > totalPages) {
@@ -132,59 +130,6 @@ const getListUsers = async (req, res, next) => {
   }
 };
 
-const parseFindQuery = (req, res) => {
-  try {
-    const { name, age, username } = req.query;
-    const lowercaseName = name ? name.toLowerCase() : "";
-    const query = {};
-
-    if (name) {
-      query.name = { $regex: lowercaseName, $options: "i" };
-    }
-
-    if (age) {
-      query.age = {};
-      if (req.query.age) {
-        query.age = req.query.age;
-      }
-      if (req.query.age.lt) {
-        query.age.$lt = parseInt(req.query.age.lt);
-      }
-      if (req.query.age.gt) {
-        query.age.$gt = parseInt(req.query.age.gt);
-      }
-      if (req.query.age.gte) {
-        query.age.$gte = parseInt(req.query.age.gte);
-      }
-      if (req.query.age.lte) {
-        query.age.$lte = parseInt(req.query.age.lte);
-      }
-      if (req.query.age.ne) {
-        query.age.$ne = parseInt(req.query.age.ne);
-      }
-    }
-    if (username) {
-      query.username = username;
-    }
-    return query;
-  } catch (error) {
-    console.error("Error finding users:", error);
-    throw error;
-  }
-};
-
-const parseSortQuery = (sortQuery) => {
-  const sort = {};
-  if (sortQuery) {
-    const sortKeys = Array.isArray(sortQuery) ? sortQuery : [sortQuery];
-    sortKeys.forEach((key) => {
-      const [field, order] = key.split(":");
-      sort[field] = order || 1;
-    });
-  }
-  return sort;
-};
-
 const getProfile = async (req, res) => {
   const user = req.user;
   const userWithoutPassword = { ...user._doc };
@@ -194,20 +139,25 @@ const getProfile = async (req, res) => {
     .send({ message: "success", profile: userWithoutPassword });
 };
 
-const fakeUser = (req, res) => {
-  const arrNewUser = [];
-  for (let i = 0; i < 30; i++) {
-    const newUser = new User();
-    newUser.username = faker.internet.userName();
-    password = faker.internet.password();
-    newUser.password = bcrypt.hashSync(password, 10);
-    newUser.age = faker.number.int({ min: 10, max: 60 });
-    newUser.name = faker.person.fullName({ min: 3 });
-    newUser.phonenumber = faker.phone.imei();
-    arrNewUser.push(newUser);
+const fakeUser = async (res) => {
+  try {
+    const arrNewUser = [];
+    for (let i = 0; i < 30; i++) {
+      const newUser = new User();
+      newUser.username = faker.internet.userName();
+      password = faker.internet.password();
+      newUser.password = bcrypt.hashSync(password, 10);
+      newUser.age = faker.number.int({ min: 10, max: 60 });
+      newUser.name = faker.person.fullName({ min: 3 });
+      newUser.phonenumber = faker.phone.imei();
+      arrNewUser.push(newUser);
+    }
+    await userService.insertMany(arrNewUser);
+    return res.status(200).send("success");
+  } catch (e) {
+    console.error(e);
+    return res.send(e.message);
   }
-  User.insertMany(arrNewUser);
-  return res.status(200).send("success");
 };
 module.exports = {
   register,

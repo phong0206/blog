@@ -17,4 +17,4 @@ const View = mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("view", View);
+module.exports = mongoose.model("View", View);

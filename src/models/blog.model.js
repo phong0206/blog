@@ -11,10 +11,11 @@ const Blog = mongoose.Schema(
       required: true,
     },
     userId: { type: mongoose.Schema.Types.ObjectId },
+    view: { type: Number },
   },
   {
     timestamps: true,
   }
 );
 
-module.exports = mongoose.model("blog", Blog);
+module.exports = mongoose.model("Blog", Blog);

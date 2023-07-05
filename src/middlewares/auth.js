@@ -1,5 +1,4 @@
 const config = require("../config/config");
-const jwt = require("jsonwebtoken");
 const { findOneById } = require("../services/user.service");
 const { verifyToken } = require("../utils/token.utils");
 exports.auth = async (req, res, next) => {

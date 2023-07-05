@@ -1,58 +1,34 @@
-const { Blog, User, View } = require("../models");
 const { faker } = require("@faker-js/faker");
-const blogService = require("../services/blog.service");
+const { blogService } = require("../services");
+const { userService } = require("../services");
+const { viewService } = require("../services");
+const mongoose = require("mongoose");
+
 const moment = require("moment");
-const parseFindQuery = (req, res) => {
-  try {
-    const { title, content } = req.query;
-    const lowercaseTitle = title ? title.toLowerCase() : "";
-    const lowercaseContent = content ? content.toLowerCase() : "";
-    const query = {};
-
-    if (title) {
-      query.title = { $regex: lowercaseTitle, $options: "i" };
-    }
-    if (content) {
-      query.content = { $regex: lowercaseContent, $options: "i" };
-    }
-
-    return query;
-  } catch (error) {
-    console.error("Error finding users:", error);
-    throw error;
-  }
-};
-
-const parseSortQuery = (sortQuery) => {
-  const sort = {};
-  if (sortQuery) {
-    const sortKeys = Array.isArray(sortQuery) ? sortQuery : [sortQuery];
-    sortKeys.forEach((key) => {
-      const [field, order] = key.split(":");
-      sort[field] = order || 1;
-    });
-  }
-  return sort;
-};
+const { parseFindQueryBlog, parseSortQuery } = require("../utils/query.utils");
 
 exports.getAllBlog = async (req, res, next) => {
   const blogsPerPage = req.query.limit;
   let currentPage = req.query.currentPage || 1;
   try {
     const sort = parseSortQuery(req.query.sort);
-    const filteredBlogs = parseFindQuery(req);
+    const filteredBlogs = parseFindQueryBlog(req);
     const totalCount = await blogService.countDocuments();
     const totalPages = Math.ceil(totalCount / blogsPerPage);
     if (currentPage < 1 || currentPage > totalPages) {
       return res.status(400).send("Invalid page");
     }
     const skipBlogs = blogsPerPage * (currentPage - 1);
+
     const blogs = await blogService.findAll(
       filteredBlogs,
       sort,
       skipBlogs,
       blogsPerPage
     );
+    for (let i = 0; i < blogs.length; i++) {
+      blogs[i].view = await viewService.getAllViewsById(blogs[i].id);
+    }
 
     res.send({
       page: currentPage,
@@ -65,10 +41,10 @@ exports.getAllBlog = async (req, res, next) => {
   }
 };
 
-exports.fakeBlog = async (req, res, next) => {
-  const users = await User.find();
+exports.fakeBlog = async (res) => {
   const arrNewBlog = [];
   try {
+    const users = await userService.getAllUsers();
     for (let i = 0; i < users.length; i++) {
       const user = users[i];
       const blogData = {
@@ -79,7 +55,7 @@ exports.fakeBlog = async (req, res, next) => {
       };
       arrNewBlog.push(blogData);
     }
-    await Blog.insertMany(arrNewBlog);
+    await blogService.insertManyByFaker(arrNewBlog);
     return res.status(200).send("success");
   } catch (e) {
     console.error(e);
@@ -87,11 +63,10 @@ exports.fakeBlog = async (req, res, next) => {
   }
 };
 
-exports.createBlog = async (req, res, next) => {
+exports.createBlog = async (req, res) => {
   try {
     const data = { ...req.body };
     const blogData = { ...data, userId: req.user.id };
-
     await blogService.create(blogData);
     return res
       .status(200)
@@ -102,14 +77,21 @@ exports.createBlog = async (req, res, next) => {
   }
 };
 
-exports.deleteBlog = async (req, res, next) => {
+exports.deleteBlog = async (req, res) => {
   const { blogId } = req.params;
   const userId = req.user.id;
   try {
-    const blog = await Blog.findById(blogId);
-    if (JSON.stringify(blog.userId) === JSON.stringify(userId)) {
-      await Blog.findByIdAndDelete(blogId, { new: true });
-      await View.deleteMany({ blogId: blog.id }, { new: true });
+    const blog = await blogService.findById(blogId);
+    if (blog.userId.toString() === userId) {
+
+      //handle transaction
+      const session = await mongoose.startSession();
+      session.startTransaction();
+      await blogService.deleteById(blogId, session);
+      await viewService.deleteMany({ blogId: blog.id }, session);
+      await session.commitTransaction();
+      session.endSession();
+
       return res.status(200).send("deleted blog successfully");
     }
     return res.status(404).send("404 Not Found");
@@ -119,20 +101,19 @@ exports.deleteBlog = async (req, res, next) => {
   }
 };
 
-exports.detailBlog = async (req, res, next) => {
+exports.detailBlog = async (req, res) => {
   const { blogId } = req.params;
   try {
-    const blog = await Blog.findById(blogId);
+    const blog = await blogService.findById(blogId);
     if (!blog) {
       return res.status(404).send({ message: "Blog Not Found" });
     }
-    const currentView = await View.findOne({
+    const currentView = await viewService.findOne({
       date: moment().startOf("day"),
       blogId: blog._id,
     });
     if (!currentView) {
-      console.log("No view found");
-      View.create({
+      await viewService.create({
         amount: 1,
         date: moment().startOf("day"),
         blogId: blog._id,
@@ -143,7 +124,7 @@ exports.detailBlog = async (req, res, next) => {
       await currentView.save();
     }
     const startDate = moment().subtract(30, "days").startOf("day");
-    const viewAmountDetail = await View.find({
+    const viewAmountDetail = await viewService.find({
       date: { $gte: startDate },
       blogId: blog._id,
     });
@@ -163,16 +144,14 @@ exports.detailBlog = async (req, res, next) => {
   }
 };
 
-exports.updateBlog = async (req, res, next) => {
+exports.updateBlog = async (req, res) => {
   const { blogId } = req.params;
   const userId = req.user.id;
   try {
     const data = { ...req.body };
-    const blog = await Blog.findById(blogId); // check blog exists
-    console.log(blog.userId);
-    console.log(userId);
+    const blog = await blogService.findById(blogId); // check blog exists
     if (JSON.stringify(blog.userId) === JSON.stringify(userId)) {
-      await Blog.findByIdAndUpdate(blogId, data, { new: true });
+      await blogService.updateById(blogId, data);
       return res.status(200).send("updated blog successfully");
     }
     return res.status(404).send("404 Not Found");
@@ -182,14 +161,11 @@ exports.updateBlog = async (req, res, next) => {
   }
 };
 
-exports.getBlog30Days = async (req, res, next) => {
+exports.getBlog30Days = async (req, res) => {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   try {
-    const blogs = await Blog.find()
-      .sort({ createdAt: 1 })
-      .where("createdAt")
-      .gte(thirtyDaysAgo);
+    const blogs = await blogService.findAndSortBy(thirtyDaysAgo);
     return res.status(200).send({ message: "success", blogs30DaysAgo: blogs });
   } catch (e) {
     console.error(e);
@@ -197,7 +173,7 @@ exports.getBlog30Days = async (req, res, next) => {
   }
 };
 
-exports.getTop10Blog = async (req, res, next) => {
+exports.getTop10Blogs = async (req, res) => {
   try {
     const arrBlog = [];
   } catch (e) {
@@ -206,10 +182,9 @@ exports.getTop10Blog = async (req, res, next) => {
   }
 };
 
-exports.fakeBlogView = async (req, res, next) => {
-  const blogs = await Blog.find();
-  const arrNewView = [];
+exports.fakeBlogView = async (req, res) => {
   try {
+    const blogs = await blogService.getAllBlogs();
     for (let i = 0; i < blogs.length; i++) {
       const blog = blogs[i];
       const viewData = {
@@ -217,9 +192,14 @@ exports.fakeBlogView = async (req, res, next) => {
         amount: faker.number.int({ min: 0, max: 1000 }),
         blogId: blog._id,
       };
-      arrNewView.push(viewData);
+      const comparseData = await viewService.find({ blogId: blog._id });
+      const exists =
+        comparseData.find((data) => data["blogId"] === blog._id) !== undefined;
+      while (exists) {
+        viewData.date = faker.date.past();
+      }
+      await viewService.create(viewData);
     }
-    await View.insertMany(arrNewView);
     return res.status(200).send("success");
   } catch (e) {
     console.error(e);

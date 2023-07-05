@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 const config = require("../config/config");
-const { saveRefreshTokenToUser } = require("../services/user.service");
 exports.generateAccessToken = (id) => {
   try {
     return jwt.sign(

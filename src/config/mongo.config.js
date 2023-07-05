@@ -1,10 +1,7 @@
 const mongoose = require("mongoose");
 const config = require("./config");
-
 console.log(config.MONGODB_URL);
-
 let countRetry = 0;
-
 exports.connectDatabase = async () => {
   mongoose.Promise = global.Promise;
   try {
@@ -14,7 +11,7 @@ exports.connectDatabase = async () => {
         useUnifiedTopology: true,
       })
       .then(() => {
-        console.log("Successfully connect to MongoDB.");
+        console.log("Connected to MongoDB successfully");
       })
       .catch((err) => {
         console.error("Connection error", err);

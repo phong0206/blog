@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
 const User = mongoose.Schema(
   {
     username: {
@@ -27,4 +26,4 @@ const User = mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("user", User);
+module.exports = mongoose.model("User", User);
