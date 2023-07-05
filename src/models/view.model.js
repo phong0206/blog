@@ -8,7 +8,6 @@ const View = mongoose.Schema(
     },
     date: {
       type: String,
-      required: true,
     },
     blogId: { type: mongoose.Schema.Types.ObjectId },
   },

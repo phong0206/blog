@@ -41,7 +41,7 @@ const login = async (req, res) => {
   }
 };
 
-const deleteAllUsers = async (res, next) => {
+const deleteAllUsers = async (req, res, next) => {
   try {
     await userService.deleteAllUsers();
     return res

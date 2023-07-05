@@ -41,7 +41,7 @@ exports.getAllBlog = async (req, res, next) => {
   }
 };
 
-exports.fakeBlog = async (res) => {
+exports.fakeBlog = async (req, res) => {
   const arrNewBlog = [];
   try {
     const users = await userService.getAllUsers();
@@ -83,7 +83,6 @@ exports.deleteBlog = async (req, res) => {
   try {
     const blog = await blogService.findById(blogId);
     if (blog.userId.toString() === userId) {
-
       //handle transaction
       const session = await mongoose.startSession();
       session.startTransaction();
@@ -188,15 +187,16 @@ exports.fakeBlogView = async (req, res) => {
     for (let i = 0; i < blogs.length; i++) {
       const blog = blogs[i];
       const viewData = {
-        date: faker.date.past(),
         amount: faker.number.int({ min: 0, max: 1000 }),
         blogId: blog._id,
       };
       const comparseData = await viewService.find({ blogId: blog._id });
-      const exists =
-        comparseData.find((data) => data["blogId"] === blog._id) !== undefined;
-      while (exists) {
-        viewData.date = faker.date.past();
+      if (comparseData.length > 0) {
+        let exists;
+        do {
+          viewData.date = faker.date.past();
+          exists = comparseData.some((data) => data.date === viewData.date);
+        } while (exists);
       }
       await viewService.create(viewData);
     }
