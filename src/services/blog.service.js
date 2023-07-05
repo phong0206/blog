@@ -23,7 +23,9 @@ exports.deleteById = async (id) => Blog.findByIdAndDelete(id, { new: true });
 exports.updateById = async (id, data) =>
   Blog.findByIdAndUpdate(id, data, { new: true });
 
-exports.findAndSort = async (date) =>
+exports.findAndSortBy = async (date) =>
   Blog.find().sort({ createdAt: 1 }).where("createdAt").gte(date);
 
 exports.getAllBlogs = async () => Blog.find();
+
+exports.getTop10BlogsView = async () => Blog.find().sort({ view: -1 }).limit(10);

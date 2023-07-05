@@ -27,9 +27,9 @@ exports.getAllBlog = async (req, res, next) => {
       blogsPerPage
     );
     for (let i = 0; i < blogs.length; i++) {
-      blogs[i].view = await viewService.getAllViewsById(blogs[i].id);
+      let view = await viewService.getAllViewsById(blogs[i].id);
+      await blogService.updateById(blogs[i].id, { view: view });
     }
-
     res.send({
       page: currentPage,
       limit: blogsPerPage,
@@ -174,7 +174,14 @@ exports.getBlog30Days = async (req, res) => {
 
 exports.getTop10Blogs = async (req, res) => {
   try {
-    const arrBlog = [];
+    const blogs = await blogService.getAllBlogs();
+    for (let i = 0; i < blogs.length; i++) {
+      let view = await viewService.getAllViewsById(blogs[i].id);
+      await blogService.updateById(blogs[i].id, { view: view });
+    }
+    const topBlogs = await blogService.getTop10BlogsView();
+
+    res.status(200).send({ message: "success", Top_10_Blogs: topBlogs });
   } catch (e) {
     console.error(e);
     return res.send(e.message);
