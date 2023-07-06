@@ -17,9 +17,21 @@ exports.auth = async (req, res, next) => {
       return res.status(403).send({ message: "Forbidden" });
     }
     req.user = user;
+    req.user.isAdmin = user.isAdmin;
+
     next();
   } catch (error) {
     console.error(error);
     res.status(403).send({ message: error.message });
   }
+};
+
+exports.checkAdminAuth = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Login, please!' });
+  }
+  if (!req.user.isAdmin) {
+    return res.status(403).json({ message: "You do not have access" });
+  }
+  next();
 };

@@ -20,6 +20,7 @@ const User = mongoose.Schema(
       type: String,
     },
     age: { type: Number, min: [6, "Age must be at least 6"], max: 100 },
+    isAdmin: { type: Boolean, default: false },
   },
   {
     timestamps: true,

@@ -4,7 +4,7 @@ const { hashPassword, comparePassword } = require("../utils/password.utils");
 const { generateAccessToken } = require("../utils/token.utils");
 const { faker } = require("@faker-js/faker");
 const { parseFindQueryUser, parseSortQuery } = require("../utils/query.utils");
-
+const {User} = require("../models");
 const register = async (req, res) => {
   try {
     const data = { ...req.body };
@@ -139,7 +139,7 @@ const getProfile = async (req, res) => {
     .send({ message: "success", profile: userWithoutPassword });
 };
 
-const fakeUser = async (res) => {
+const fakeUser = async (req, res) => {
   try {
     const arrNewUser = [];
     for (let i = 0; i < 30; i++) {
