@@ -59,7 +59,7 @@ const createUser = async (req, res, next) => {
     const isUser = await userService.findOneByUsername(newUser.username);
     if (isUser) return res.status(400).send({ message: "User does exist" });
     newUser.password = hashPassword(newUser.password);
-    userService.create(newUser);
+    await userService.create(newUser);
     return res
       .status(200)
       .json({ message: "User created successfully", profile: newUser });

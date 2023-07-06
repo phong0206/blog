@@ -25,3 +25,9 @@ exports.deleteById = async (userId) =>
 exports.insertMany = async (data) => User.insertMany(data, { new: true });
 
 exports.getAllUsers = async () => User.find()
+
+exports.getRandomUsers = async (numberOfIds) =>
+  User.aggregate([
+    { $sample: { size: numberOfIds } },
+    { $project: { _id: 1 } },
+  ]);

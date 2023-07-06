@@ -11,9 +11,8 @@ router.put("/update-blog/:blogId", auth, blogController.updateBlog);
 router.get("/detail-blog/:blogId", blogController.detailBlog);
 router.get("/get-detail-blog-30days", blogController.getBlog30Days);
 router.post("/fake-views-blog", blogController.fakeBlogView);
-
 router.get("/get-top-10-blog", blogController.getTop10Blogs);
-
+router.get("/fake-random", blogController.fakeRandomBlogsAndViews);
 
 
 module.exports = router;

@@ -3,7 +3,6 @@ const { blogService } = require("../services");
 const { userService } = require("../services");
 const { viewService } = require("../services");
 const mongoose = require("mongoose");
-
 const moment = require("moment");
 const { parseFindQueryBlog, parseSortQuery } = require("../utils/query.utils");
 
@@ -49,13 +48,13 @@ exports.fakeBlog = async (req, res) => {
       const user = users[i];
       const blogData = {
         title: faker.lorem.words(),
-        content: faker.lorem.paragraph(),
+        content: faker.lorem.paragraph({ min: 50, max: 100 }),
         userId: user._id,
         createdAt: faker.date.past(),
       };
       arrNewBlog.push(blogData);
     }
-    await blogService.insertManyByFaker(arrNewBlog);
+
     return res.status(200).send("success");
   } catch (e) {
     console.error(e);
@@ -176,7 +175,7 @@ exports.getTop10Blogs = async (req, res) => {
   try {
     const blogs = await blogService.getAllBlogs();
     for (let i = 0; i < blogs.length; i++) {
-      let view = await viewService.getAllViewsById(blogs[i].id);
+      let view = (await viewService.getAllViewsById(blogs[i].id)) || 0;
       await blogService.updateById(blogs[i].id, { view: view });
     }
     const topBlogs = await blogService.getTop10BlogsView();
@@ -194,7 +193,7 @@ exports.fakeBlogView = async (req, res) => {
     for (let i = 0; i < blogs.length; i++) {
       const blog = blogs[i];
       const viewData = {
-        amount: faker.number.int({ min: 0, max: 1000 }),
+        amount: faker.number.int({ min: 0, max: 500 }),
         blogId: blog._id,
       };
       const comparseData = await viewService.find({ blogId: blog._id });
@@ -207,6 +206,46 @@ exports.fakeBlogView = async (req, res) => {
       }
       await viewService.create(viewData);
     }
+    return res.status(200).send("success");
+  } catch (e) {
+    console.error(e);
+    return res.send(e.message);
+  }
+};
+
+exports.fakeRandomBlogsAndViews = async (req, res) => {
+  const numberOfIds = +req.query.numberOfIds || 50;
+  const arrNewBlogs = [];
+  let arrNewViews = [];
+  try {
+    //fake blog
+    const randomUser = await userService.getRandomUsers(numberOfIds);
+    for (let i = 0; i < randomUser.length; i++) {
+      const blogData = {
+        title: faker.lorem.words(),
+        content: faker.lorem.paragraph({ min: 50, max: 100 }),
+        userId: randomUser[i]._id,
+        createdAt: faker.date.past(),
+      };
+      arrNewBlogs.push(blogData);
+    }
+    const newBlogs = await blogService.insertManyByFaker(arrNewBlogs);
+    // fake view
+    for (let i = 0; i < newBlogs.length; i++) {
+      const blog = newBlogs[i];
+      const currentDate = moment();
+      for (let j = 1; j <= 30; j++) {
+        const viewData = {
+          amount: faker.number.int({ min: 0, max: 500 }),
+          blogId: blog._id,
+          date: moment(currentDate).subtract(j, "days"),
+        };
+        arrNewViews.push(viewData);
+      }
+      await viewService.insertMany(arrNewViews);
+      arrNewViews = [];
+    }
+
     return res.status(200).send("success");
   } catch (e) {
     console.error(e);
