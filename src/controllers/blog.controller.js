@@ -4,39 +4,30 @@ const { userService } = require("../services");
 const { viewService } = require("../services");
 const mongoose = require("mongoose");
 const moment = require("moment");
-const { parseFindQueryBlog, parseSortQuery } = require("../utils/query.utils");
+const apiResponse = require("../utils/apiResponse");
+const {
+  parseSortQuery,
+  getQueryFilter,
+  getAllData,
+} = require("../utils/query.utils");
+const { application } = require("express");
 
 exports.getAllBlog = async (req, res, next) => {
-  const blogsPerPage = req.query.limit;
-  let currentPage = req.query.currentPage || 1;
   try {
-    const sort = parseSortQuery(req.query.sort);
-    const filteredBlogs = parseFindQueryBlog(req);
-    const totalCount = await blogService.countDocuments();
-    const totalPages = Math.ceil(totalCount / blogsPerPage);
-    if (currentPage < 1 || currentPage > totalPages) {
-      return res.status(400).send("Invalid page");
+    const data = await getAllData(req, res, blogService);
+    for (let i = 0; i < data.data.length; i++) {
+      let view = await viewService.getAllViewsById(data.data[i].id);
+      await blogService.updateById(data.data[i].id, { view: view });
     }
-    const skipBlogs = blogsPerPage * (currentPage - 1);
-
-    const blogs = await blogService.findAll(
-      filteredBlogs,
-      sort,
-      skipBlogs,
-      blogsPerPage
-    );
-    for (let i = 0; i < blogs.length; i++) {
-      let view = await viewService.getAllViewsById(blogs[i].id);
-      await blogService.updateById(blogs[i].id, { view: view });
-    }
-    res.send({
-      page: currentPage,
-      limit: blogsPerPage,
-      totalPages,
-      blogs,
+    return apiResponse.successResponseWithData(res, "success", {
+      page: data.currentPage,
+      limit: data.limit,
+      totalPages: data.totalPages,
+      blogs: data.data,
     });
   } catch (error) {
-    next(error);
+    console.error(err);
+    return apiResponse.ErrorResponse(res, err.message);
   }
 };
 
@@ -55,10 +46,10 @@ exports.fakeBlog = async (req, res) => {
       arrNewBlog.push(blogData);
     }
 
-    return res.status(200).send("success");
+    return apiResponse.successResponse(res, "Blog created successfully");
   } catch (e) {
-    console.error(e);
-    return res.send(e.message);
+    console.error(err);
+    return apiResponse.ErrorResponse(res, err.message);
   }
 };
 
@@ -67,12 +58,16 @@ exports.createBlog = async (req, res) => {
     const data = { ...req.body };
     const blogData = { ...data, userId: req.user.id };
     await blogService.create(blogData);
-    return res
-      .status(200)
-      .send({ message: "created blog successfully", detail: blogData });
+    return apiResponse.successResponseWithData(
+      res,
+      "created blog successfully",
+      {
+        detail: blogData,
+      }
+    );
   } catch (e) {
-    console.error(e);
-    return res.send(e.message);
+    console.error(err);
+    return apiResponse.ErrorResponse(res, err.message);
   }
 };
 
@@ -90,12 +85,12 @@ exports.deleteBlog = async (req, res) => {
       await session.commitTransaction();
       session.endSession();
 
-      return res.status(200).send("deleted blog successfully");
+      return apiResponse.successResponse(res, "Successfully deleted blog");
     }
-    return res.status(404).send("404 Not Found");
+    return apiResponse.notFoundResponse(res, "Blog not found");
   } catch (e) {
-    console.error(e);
-    return res.send(e.message);
+    console.error(err);
+    return apiResponse.ErrorResponse(res, err.message);
   }
 };
 
@@ -104,7 +99,7 @@ exports.detailBlog = async (req, res) => {
   try {
     const blog = await blogService.findById(blogId);
     if (!blog) {
-      return res.status(404).send({ message: "Blog Not Found" });
+      return apiResponse.notFoundResponse(res, "Blog not found");
     }
     const currentView = await viewService.findOne({
       date: moment().startOf("day"),
@@ -130,15 +125,18 @@ exports.detailBlog = async (req, res) => {
       date,
       amount,
     }));
-    return res.status(200).send({
-      message: "get detail blog successfully",
-      detail: blog,
-      detail_view_30days: filteredBlogs,
-      views_today: currentView ? currentView.amount : 1,
-    });
+    return apiResponse.successResponseWithData(
+      res,
+      "get details blog successfully",
+      {
+        detail: blog,
+        detail_view_30days: filteredBlogs,
+        views_today: currentView ? currentView.amount : 1,
+      }
+    );
   } catch (e) {
-    console.error(e);
-    return res.send(e.message);
+    console.error(err);
+    return apiResponse.ErrorResponse(res, err.message);
   }
 };
 
@@ -150,12 +148,12 @@ exports.updateBlog = async (req, res) => {
     const blog = await blogService.findById(blogId); // check blog exists
     if (JSON.stringify(blog.userId) === JSON.stringify(userId)) {
       await blogService.updateById(blogId, data);
-      return res.status(200).send("updated blog successfully");
+      return apiResponse.successResponse(res, "Successfully updated");
     }
-    return res.status(404).send("404 Not Found");
+    return apiResponse.notFoundResponse(res, "Not found for blog");
   } catch (e) {
-    console.error(e);
-    return res.send(e.message);
+    console.error(err);
+    return apiResponse.ErrorResponse(res, err.message);
   }
 };
 
@@ -164,10 +162,12 @@ exports.getBlog30Days = async (req, res) => {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   try {
     const blogs = await blogService.findAndSortBy(thirtyDaysAgo);
-    return res.status(200).send({ message: "success", blogs30DaysAgo: blogs });
+    return apiResponse.successResponseWithData(res, "success", {
+      blogs30DaysAgo: blogs,
+    });
   } catch (e) {
-    console.error(e);
-    return res.send(e.message);
+    console.error(err);
+    return apiResponse.ErrorResponse(res, err.message);
   }
 };
 
@@ -179,11 +179,12 @@ exports.getTop10Blogs = async (req, res) => {
       await blogService.updateById(blogs[i].id, { view: view });
     }
     const topBlogs = await blogService.getTop10BlogsView();
-
-    res.status(200).send({ message: "success", Top_10_Blogs: topBlogs });
+    return apiResponse.successResponseWithData(res, "success", {
+      Top_10_Blogs: topBlogs,
+    });
   } catch (e) {
-    console.error(e);
-    return res.send(e.message);
+    console.error(err);
+    return apiResponse.ErrorResponse(res, err.message);
   }
 };
 
@@ -206,10 +207,10 @@ exports.fakeBlogView = async (req, res) => {
       }
       await viewService.create(viewData);
     }
-    return res.status(200).send("success");
-  } catch (e) {
-    console.error(e);
-    return res.send(e.message);
+    return apiResponse.successResponse(res, "successfully created");
+  } catch (err) {
+    console.error(err);
+    return apiResponse.ErrorResponse(res, err.message);
   }
 };
 
@@ -246,9 +247,9 @@ exports.fakeRandomBlogsAndViews = async (req, res) => {
       arrNewViews = [];
     }
 
-    return res.status(200).send("success");
-  } catch (e) {
-    console.error(e);
-    return res.send(e.message);
+    return apiResponse.successResponse(res, "success");
+  } catch (err) {
+    console.error(err);
+    return apiResponse.ErrorResponse(res, err.message);
   }
 };
