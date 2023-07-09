@@ -5,12 +5,7 @@ const { viewService } = require("../services");
 const mongoose = require("mongoose");
 const moment = require("moment");
 const apiResponse = require("../utils/apiResponse");
-const {
-  parseSortQuery,
-  getQueryFilter,
-  getAllData,
-} = require("../utils/query.utils");
-const { application } = require("express");
+const { getAllData } = require("../utils/query.utils");
 
 exports.getAllBlog = async (req, res, next) => {
   try {
@@ -31,28 +26,6 @@ exports.getAllBlog = async (req, res, next) => {
   }
 };
 
-exports.fakeBlog = async (req, res) => {
-  const arrNewBlog = [];
-  try {
-    const users = await userService.getAllUsers();
-    for (let i = 0; i < users.length; i++) {
-      const user = users[i];
-      const blogData = {
-        title: faker.lorem.words(),
-        content: faker.lorem.paragraph({ min: 50, max: 100 }),
-        userId: user._id,
-        createdAt: faker.date.past(),
-      };
-      arrNewBlog.push(blogData);
-    }
-
-    return apiResponse.successResponse(res, "Blog created successfully");
-  } catch (e) {
-    console.error(err);
-    return apiResponse.ErrorResponse(res, err.message);
-  }
-};
-
 exports.createBlog = async (req, res) => {
   try {
     const data = { ...req.body };
@@ -65,7 +38,7 @@ exports.createBlog = async (req, res) => {
         detail: blogData,
       }
     );
-  } catch (e) {
+  } catch (err) {
     console.error(err);
     return apiResponse.ErrorResponse(res, err.message);
   }
@@ -183,32 +156,6 @@ exports.getTop10Blogs = async (req, res) => {
       Top_10_Blogs: topBlogs,
     });
   } catch (e) {
-    console.error(err);
-    return apiResponse.ErrorResponse(res, err.message);
-  }
-};
-
-exports.fakeBlogView = async (req, res) => {
-  try {
-    const blogs = await blogService.getAllBlogs();
-    for (let i = 0; i < blogs.length; i++) {
-      const blog = blogs[i];
-      const viewData = {
-        amount: faker.number.int({ min: 0, max: 500 }),
-        blogId: blog._id,
-      };
-      const comparseData = await viewService.find({ blogId: blog._id });
-      if (comparseData.length > 0) {
-        let exists;
-        do {
-          viewData.date = faker.date.past();
-          exists = comparseData.some((data) => data.date === viewData.date);
-        } while (exists);
-      }
-      await viewService.create(viewData);
-    }
-    return apiResponse.successResponse(res, "successfully created");
-  } catch (err) {
     console.error(err);
     return apiResponse.ErrorResponse(res, err.message);
   }

@@ -12,6 +12,8 @@ exports.register = {
     username: Joi.string().min(6).max(20).required(),
     password: Joi.string().min(6).required(),
     name: Joi.string().min(3),
-    isAdmin: Joi.boolean()
+    isAdmin: Joi.boolean(),
+    phonenumber: Joi.string(),
+    age: Joi.number().min(6).max(20)
   }),
 };

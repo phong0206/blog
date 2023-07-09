@@ -12,7 +12,7 @@ const register = async (req, res) => {
     const data = { ...req.body };
     const user = await userService.findOneByUsername(data.username);
     if (user) {
-      return apiResponse.notFoundResponse(res, "User not found");
+      return apiResponse.notFoundResponse(res, "User already exists");
     }
     data.password = hashPassword(data.password);
     await userService.create(data);

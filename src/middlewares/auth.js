@@ -29,10 +29,10 @@ exports.auth = async (req, res, next) => {
 
 exports.checkAdminAuth = (req, res, next) => {
   if (!req.user) {
-    return apiResponse.notFoundResponse(req, "Login Error");
+    return apiResponse.notFoundResponse(res, "Login Error");
   }
   if (!req.user.isAdmin) {
-    return apiResponse.notFoundResponse(req, "Admin Authentication Error");
+    return apiResponse.notFoundResponse(res, "Admin Authentication Error");
   }
   next();
 };
