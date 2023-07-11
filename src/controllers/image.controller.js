@@ -2,11 +2,13 @@ const fs = require("fs");
 const path = require("path");
 const apiResponse = require("../utils/apiResponse");
 const { Image } = require("../models");
+const { imageService } = require("../services");
+
 const upload = async (req, res) => {
   try {
     if (req.file) {
       const data = { ...req.file };
-      const savedImage = await Image.create(data);
+      const savedImage = await imageService.create(data);
       return apiResponse.successResponseWithData(
         res,
         "upload Successfully",
@@ -28,7 +30,7 @@ const uploadPhotos = async (req, res) => {
       for (const file of files) {
         photos.push(file);
       }
-      const savedImage = await Image.insertMany(photos);
+      const savedImage = await imageService.insertMany(photos);
       res.json(savedImage);
     } else {
       return apiResponse.notFoundResponse(res, "Not Found");
@@ -43,12 +45,12 @@ const deleteAvatar = async (req, res) => {
   try {
     const { id } = req.params;
     if (!id) return apiResponse.notFoundResponse(res, "Id not found");
-    const image = await Image.findById({ _id: id });
+    const image = await imageService.findById({ _id: id });
     if (!image) return apiResponse.notFoundResponse(res, "Image not found");
     const imagePath = path.join(__dirname, "../../uploads", image.filename);
     console.log(imagePath);
     fs.unlinkSync(imagePath);
-    await Image.findByIdAndDelete({ _id: id });
+    await imageService.deleteById({ _id: id });
     return apiResponse.successResponse(res, "Image deleted successfully");
   } catch (error) {
     console.error(err);
