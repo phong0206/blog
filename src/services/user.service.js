@@ -14,8 +14,6 @@ exports.deleteAllUsers = async () => User.deleteMany({});
 
 exports.countDocuments = async () => User.countDocuments();
 
-exports.deleteOneById = async (userId) => User.findByIdAndDelete(userId);
-
 exports.updateById = async (userId, data) =>
   User.findByIdAndUpdate(userId, data, { new: true });
 

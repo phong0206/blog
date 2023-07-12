@@ -291,15 +291,15 @@ router.get("/get-detail-blogs-30days", blogController.getBlog30Days);
  * security:
  *   - bearerAuth: []
  *
- * /user/auth/get-top-10-blogs:
+ * /blog/auth/get-top-10-blogs:
  *   get:
- *     summary: get top 10 blogs
+ *     summary: create user
  *     tags: [Blogs]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: successful
+ *         description: create blog successful
  *         content:
  *           application/json:
  *             schema:
@@ -312,7 +312,6 @@ router.get("/get-detail-blogs-30days", blogController.getBlog30Days);
 router.get(
   "/get-top-10-blogs",
   auth,
-  checkAdminAuth,
   blogController.getTop10Blogs
 );
 
@@ -328,15 +327,21 @@ router.get(
  * security:
  *   - bearerAuth: []
  *
- * /user/auth/fake-random:
+ * /blog/auth/fake-random:
  *   get:
- *     summary: fake random blog and view
+ *     summary: create user
  *     tags: [Blogs]
+ *     parameters:
+ *       - in: query
+ *         name: numberOfIds
+ *         schema:
+ *           type: integer
+ *         description: the number of Ids to create
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: fake random blog and view successful
+ *         description: create blog successful
  *         content:
  *           application/json:
  *             schema:
@@ -349,7 +354,6 @@ router.get(
 router.get(
   "/fake-random",
   auth,
-  checkAdminAuth,
   blogController.fakeRandomBlogsAndViews
 );
 

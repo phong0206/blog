@@ -12,7 +12,6 @@ const Image = mongoose.Schema(
       type: String,
     },
     originalname: { type: String },
-    userId: { type: mongoose.Schema.Types.ObjectId },
     mimetype: { type: String },
   },
   {

@@ -15,7 +15,12 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 const router = express.Router();
 
-router.post("/profile", auth, upload.single("avatar"), imageController.upload);
+router.post(
+  "/profile",
+  auth,
+  upload.single("avatar"),
+  imageController.uploadAvatar
+);
 router.post(
   "/photos/upload",
   auth,
@@ -23,4 +28,11 @@ router.post(
   imageController.uploadPhotos
 );
 router.delete("/profile/:id", auth, imageController.deleteAvatar);
+router.put(
+  "/change-avatar",
+  auth,
+  upload.single("avatar_change"),
+  imageController.changeAvatar
+);
+
 module.exports = router;

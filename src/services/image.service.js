@@ -12,6 +12,8 @@ exports.insertMany = async (arr) => Image.insertMany(arr);
 
 exports.deleteById = async (id) => Image.findByIdAndDelete(id, { new: true });
 
+exports.deleteByUserId = async (userId) => Image.deleteByUserId(userId);
+
 exports.updateById = async (id, data) =>
   Image.findByIdAndUpdate(id, data, { new: true });
 

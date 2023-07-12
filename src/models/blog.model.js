@@ -12,6 +12,7 @@ const Blog = mongoose.Schema(
     },
     userId: { type: mongoose.Schema.Types.ObjectId },
     view: { type: Number },
+    imageId: { type: [String] },
   },
   {
     timestamps: true,
