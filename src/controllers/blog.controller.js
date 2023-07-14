@@ -1,15 +1,43 @@
 const { faker } = require("@faker-js/faker");
-const { blogService } = require("../services");
-const { userService } = require("../services");
-const { viewService } = require("../services");
+const {
+  blogService,
+  userService,
+  viewService,
+  imageService,
+} = require("../services");
+const { View } = require("../models");
+const fs = require("fs");
+const path = require("path");
 const mongoose = require("mongoose");
 const moment = require("moment");
 const apiResponse = require("../utils/apiResponse");
 const { getAllData } = require("../utils/query.utils");
 
+const EventEmitter = require("events");
+const ee = new EventEmitter();
+
+ee.on("update-view-amount", async (currentView, blog) => {
+  try {
+    if (!currentView) {
+      await viewService.create({
+        amount: 1,
+        date: moment().startOf("day").format("YYYY-MM-DD"),
+        blogId: blog?._id,
+      });
+    } else {
+      await viewService.updateById(currentView._id, {
+        amount: currentView.amount + 1,
+      });
+    }
+  } catch (error) {
+    console.error("Error updating view amount:", error);
+  }
+});
+
 exports.getAllBlog = async (req, res, next) => {
   try {
     const data = await getAllData(req, res, blogService);
+
     for (let i = 0; i < data.data.length; i++) {
       let view = await viewService.getAllViewsById(data.data[i].id);
       await blogService.updateById(data.data[i].id, { view: view });
@@ -20,17 +48,36 @@ exports.getAllBlog = async (req, res, next) => {
       totalPages: data.totalPages,
       blogs: data.data,
     });
-  } catch (error) {
+  } catch (err) {
     console.error(err);
     return apiResponse.ErrorResponse(res, err.message);
   }
 };
 
 exports.createBlog = async (req, res) => {
+  const data = { ...req.body };
+  const userId = req.user.id;
+  const files = req.files;
+  const photos = [];
+  const arrImageIds = [];
   try {
-    const data = { ...req.body };
-    const blogData = { ...data, userId: req.user.id };
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    if (files) {
+      for (const file of files) {
+        photos.push(file);
+      }
+      const savedImage = await imageService.insertMany(photos);
+      for (const img of savedImage) {
+        arrImageIds.push(img._id);
+      }
+    }
+    const blogData = { ...data, userId: userId, imageId: arrImageIds || [] };
     await blogService.create(blogData);
+
+    await session.commitTransaction();
+    session.endSession();
+
     return apiResponse.successResponseWithData(
       res,
       "created blog successfully",
@@ -50,18 +97,25 @@ exports.deleteBlog = async (req, res) => {
   try {
     const blog = await blogService.findById(blogId);
     if (blog.userId.toString() === userId) {
-      //handle transaction
       const session = await mongoose.startSession();
       session.startTransaction();
-      await blogService.deleteById(blogId, session);
-      await viewService.deleteMany({ blogId: blog.id }, session);
+      if (blog.imageId) {
+        const image = await imageService.findById(blog.imageId);
+        const imagePath = path.join(__dirname, "../../uploads", image.filename);
+        fs.unlinkSync(imagePath);
+        await imageService.deleteMany(blog.imageId);
+      }
+      await Promise.all([
+        blogService.deleteById(blogId, session),
+        viewService.deleteMany({ blogId: blog.id }, session),
+      ]);
       await session.commitTransaction();
       session.endSession();
 
       return apiResponse.successResponse(res, "Successfully deleted blog");
     }
     return apiResponse.notFoundResponse(res, "Blog not found");
-  } catch (e) {
+  } catch (err) {
     console.error(err);
     return apiResponse.ErrorResponse(res, err.message);
   }
@@ -69,45 +123,37 @@ exports.deleteBlog = async (req, res) => {
 
 exports.detailBlog = async (req, res) => {
   const { blogId } = req.params;
+  const startDate = moment()
+    .subtract(42, "days")
+    .startOf("day")
+    .format("YYYY-MM-DD");
   try {
     const blog = await blogService.findById(blogId);
-    if (!blog) {
-      return apiResponse.notFoundResponse(res, "Blog not found");
-    }
-    const currentView = await viewService.findOne({
-      date: moment().startOf("day"),
-      blogId: blog._id,
-    });
-    if (!currentView) {
-      await viewService.create({
-        amount: 1,
-        date: moment().startOf("day"),
-        blogId: blog._id,
-      });
-    }
-    if (currentView) {
-      currentView.amount += 1;
-      await currentView.save();
-    }
-    const startDate = moment().subtract(30, "days").startOf("day");
-    const viewAmountDetail = await viewService.find({
-      date: { $gte: startDate },
-      blogId: blog._id,
-    });
-    const filteredBlogs = viewAmountDetail.map(({ date, amount }) => ({
-      date,
-      amount,
-    }));
+    const [currentView, viewAmountDetail] = await Promise.all([
+      viewService.findOne({
+        date: moment().startOf("day").format("YYYY-MM-DD"),
+        blogId: blogId,
+      }),
+      viewService.findFilter(
+        {
+          date: { $gte: startDate },
+          blogId: blogId,
+        },
+        "date amount -_id"
+      ),
+    ]);
+    if (!blog) return apiResponse.notFoundResponse(res, "Blog not found");
+    ee.emit("update-view-amount", currentView, blog);
     return apiResponse.successResponseWithData(
       res,
       "get details blog successfully",
       {
         detail: blog,
-        detail_view_30days: filteredBlogs,
-        views_today: currentView ? currentView.amount : 1,
+        detail_view_30days: viewAmountDetail,
+        views_today: currentView ? currentView.amount + 1 : 1,
       }
     );
-  } catch (e) {
+  } catch (err) {
     console.error(err);
     return apiResponse.ErrorResponse(res, err.message);
   }
@@ -116,15 +162,18 @@ exports.detailBlog = async (req, res) => {
 exports.updateBlog = async (req, res) => {
   const { blogId } = req.params;
   const userId = req.user.id;
+  const data = { ...req.body };
   try {
-    const data = { ...req.body };
-    const blog = await blogService.findById(blogId); // check blog exists
-    if (JSON.stringify(blog.userId) === JSON.stringify(userId)) {
+    const blog = await blogService.findById(blogId);
+    if (!blog) return apiResponse.notFoundResponse(res, "Blog not found");
+
+    if (blog.userId.toString() === userId) {
       await blogService.updateById(blogId, data);
+
       return apiResponse.successResponse(res, "Successfully updated");
     }
     return apiResponse.notFoundResponse(res, "Not found for blog");
-  } catch (e) {
+  } catch (err) {
     console.error(err);
     return apiResponse.ErrorResponse(res, err.message);
   }
@@ -138,7 +187,7 @@ exports.getBlog30Days = async (req, res) => {
     return apiResponse.successResponseWithData(res, "success", {
       blogs30DaysAgo: blogs,
     });
-  } catch (e) {
+  } catch (err) {
     console.error(err);
     return apiResponse.ErrorResponse(res, err.message);
   }
@@ -155,7 +204,7 @@ exports.getTop10Blogs = async (req, res) => {
     return apiResponse.successResponseWithData(res, "success", {
       Top_10_Blogs: topBlogs,
     });
-  } catch (e) {
+  } catch (err) {
     console.error(err);
     return apiResponse.ErrorResponse(res, err.message);
   }
@@ -177,7 +226,11 @@ exports.fakeRandomBlogsAndViews = async (req, res) => {
       };
       arrNewBlogs.push(blogData);
     }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
     const newBlogs = await blogService.insertManyByFaker(arrNewBlogs);
+    console.log(newBlogs[1]._id);
     // fake view
     for (let i = 0; i < newBlogs.length; i++) {
       const blog = newBlogs[i];
@@ -186,13 +239,16 @@ exports.fakeRandomBlogsAndViews = async (req, res) => {
         const viewData = {
           amount: faker.number.int({ min: 0, max: 500 }),
           blogId: blog._id,
-          date: moment(currentDate).subtract(j, "days"),
+          date: moment(currentDate).subtract(j, "days").format("YYYY-MM-DD"),
         };
         arrNewViews.push(viewData);
       }
+
       await viewService.insertMany(arrNewViews);
       arrNewViews = [];
     }
+    await session.commitTransaction();
+    session.endSession();
 
     return apiResponse.successResponse(res, "success");
   } catch (err) {

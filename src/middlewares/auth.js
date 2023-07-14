@@ -21,7 +21,7 @@ exports.auth = async (req, res, next) => {
     req.user.isAdmin = user.isAdmin;
 
     next();
-  } catch (error) {
+  } catch (err) {
     console.error(err);
     return apiResponse.ErrorResponse(res, err.message);
   }

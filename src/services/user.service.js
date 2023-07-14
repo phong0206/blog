@@ -24,6 +24,8 @@ exports.insertMany = async (data) => User.insertMany(data, { new: true });
 
 exports.getAllUsers = async () => User.find()
 
+exports.findFilter = async (data, select) => User.find(data).select(select);
+
 exports.getRandomUsers = async (numberOfIds) =>
   User.aggregate([
     { $sample: { size: numberOfIds } },

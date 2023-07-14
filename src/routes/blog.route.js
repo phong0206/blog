@@ -2,6 +2,7 @@ const express = require("express");
 const { blogController } = require("../controllers");
 const { auth, checkAdminAuth } = require("../middlewares/auth");
 const router = express.Router();
+const { upload } = require("../config/multer.config");
 
 /**
  * @swagger
@@ -126,7 +127,12 @@ router.get("/get-all-blogs", blogController.getAllBlog);
  *       500:
  *         description: server error
  */
-router.post("/create-blog", auth, blogController.createBlog);
+router.post(
+  "/create-blog",
+  auth,
+  upload.array("photos", 12),
+  blogController.createBlog
+);
 
 /**
  * @swagger
@@ -309,11 +315,7 @@ router.get("/get-detail-blogs-30days", blogController.getBlog30Days);
  *       500:
  *         description: server error
  */
-router.get(
-  "/get-top-10-blogs",
-  auth,
-  blogController.getTop10Blogs
-);
+router.get("/get-top-10-blogs", auth, blogController.getTop10Blogs);
 
 /**
  * @swagger
@@ -351,10 +353,6 @@ router.get(
  *       500:
  *         description: server error
  */
-router.get(
-  "/fake-random",
-  auth,
-  blogController.fakeRandomBlogsAndViews
-);
+router.get("/fake-random", auth, blogController.fakeRandomBlogsAndViews);
 
 module.exports = router;

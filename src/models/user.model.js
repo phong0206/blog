@@ -8,7 +8,6 @@ const User = mongoose.Schema(
       alphanumeric: true,
       default: "admin123",
     },
-    imageId: { type: [String] },
     avatarId: { type: String },
     password: {
       type: String,

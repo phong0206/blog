@@ -19,7 +19,7 @@ exports.connectDatabase = async () => {
       });
     countRetry = 0;
   } catch (err) {
-    console.log(error);
+    console.log(err);
     countRetry += 1;
     console.log(
       `Could not connect to the mongo database. Retry times: ${countRetry}`

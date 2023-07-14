@@ -8,12 +8,10 @@ const { User } = require("../models");
 const apiResponse = require("../utils/apiResponse");
 
 const register = async (req, res) => {
+  const data = { ...req.body };
   try {
-    const data = { ...req.body };
     const user = await userService.findOneByUsername(data.username);
-    if (user) {
-      return apiResponse.notFoundResponse(res, "User already exists");
-    }
+    if (user) return apiResponse.notFoundResponse(res, "User already exists");
     data.password = hashPassword(data.password);
     await userService.create(data);
     return apiResponse.successResponse(res, "User created successfully");
@@ -24,8 +22,8 @@ const register = async (req, res) => {
 };
 
 const login = async (req, res) => {
+  const data = { ...req.body };
   try {
-    const data = { ...req.body };
     const user = await userService.findOneByUsername(data.username);
     if (!user) return apiResponse.notFoundResponse(res, "User not found");
     const passwordIsValid = comparePassword(data.password, user.password);
@@ -34,12 +32,15 @@ const login = async (req, res) => {
         res,
         "Invalid password provided"
       );
-    const userWithoutPassword = { ...user };
-    delete userWithoutPassword.password;
-    const accessToken = await generateAccessToken(user._id);
+
+    const accessToken = generateAccessToken(user._id);
+    const profile = await userService.findFilter(
+      { _id: user._id },
+      "-password"
+    );
     return apiResponse.successResponseWithData(res, "login successfully", {
       accessToken: accessToken,
-      profile: userWithoutPassword,
+      profile: profile,
     });
   } catch (err) {
     console.error(err);
@@ -58,12 +59,14 @@ const deleteAllUsers = async (req, res, next) => {
 };
 
 const createUser = async (req, res, next) => {
+  const newUser = req.body;
+  newUser.password = hashPassword(newUser.password);
   try {
-    const newUser = req.body;
-    const isUser = await userService.findOneByUsername(newUser.username);
-    if (isUser) return apiResponse.notFoundResponse(res, "User not found");
-    newUser.password = hashPassword(newUser.password);
-    await userService.create(newUser);
+    const [isUser, createUser] = await Promise.all([
+      userService.findOneByUsername(newUser.username),
+      userService.create(newUser),
+    ]);
+    if (isUser) return apiResponse.notFoundResponse(res, "User already exists");
     return apiResponse.successResponseWithData(res, "created successfully", {
       profile: newUser,
     });
@@ -74,14 +77,14 @@ const createUser = async (req, res, next) => {
 };
 
 const updateUser = async (req, res, next) => {
+  const { id } = req.params;
+  const data = req.body;
   try {
-    const { id } = req.params;
-    const data = req.body;
-    const isId = await userService.findOneById(id);
-    if (!isId) {
-      return apiResponse.notFoundResponse(res, "User not found");
-    }
-    await userService.updateById(id, data);
+    const [isId] = await Promise.all([
+      userService.findOneById(id),
+      userService.updateById(id, data),
+    ]);
+    if (!isId) return apiResponse.notFoundResponse(res, "User not found");
     return apiResponse.successResponse(res, "User updated successfully");
   } catch (err) {
     console.error(err);
@@ -90,13 +93,13 @@ const updateUser = async (req, res, next) => {
 };
 
 const deleteUser = async (req, res, next) => {
+  const { id } = req.params;
   try {
-    const { id } = req.params;
-    const isId = await userService.findOneById(id);
-    if (!isId) {
-      return apiResponse.notFoundResponse(res, "User not found");
-    }
-    await userService.deleteById(id);
+    const [isId] = await Promise.all([
+      userService.findOneById(id),
+      userService.deleteById(id),
+    ]);
+    if (!isId) return apiResponse.notFoundResponse(res, "User not found");
     return apiResponse.successResponse(res, "User deleted successfully");
   } catch (err) {
     console.error(err);
@@ -117,26 +120,30 @@ const getListUsers = async (req, res, next) => {
         users: data.data,
       }
     );
-  } catch (error) {
+  } catch (err) {
     console.error(err);
     return apiResponse.ErrorResponse(res, err.message);
   }
 };
 
 const getProfile = async (req, res) => {
-  const user = req.user;
-  const userWithoutPassword = { ...user._doc };
-  delete userWithoutPassword.password;
-  return apiResponse.successResponseWithData(
-    res,
-    "get profile successfully",
-    userWithoutPassword
-  );
+  const userId = req.user.id;
+  try {
+    const data = await userService.findFilter({ _id: userId }, "-password");
+    return apiResponse.successResponseWithData(
+      res,
+      "get profile successfully",
+      data
+    );
+  } catch (err) {
+    console.error(err);
+    return apiResponse.ErrorResponse(res, err.message);
+  }
 };
 
 const fakeUser = async (req, res) => {
+  const arrNewUser = [];
   try {
-    const arrNewUser = [];
     for (let i = 0; i < 30; i++) {
       const newUser = new User();
       newUser.username = faker.internet.userName();
@@ -149,7 +156,7 @@ const fakeUser = async (req, res) => {
     }
     await userService.insertMany(arrNewUser);
     return apiResponse.successResponse(res, "success");
-  } catch (e) {
+  } catch (err) {
     console.error(err);
     return apiResponse.ErrorResponse(res, err.message);
   }
