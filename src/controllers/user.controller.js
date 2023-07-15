@@ -6,7 +6,6 @@ const { faker } = require("@faker-js/faker");
 const { getAllData } = require("../utils/query.utils");
 const { User } = require("../models");
 const apiResponse = require("../utils/apiResponse");
-
 const register = async (req, res) => {
   const data = { ...req.body };
   try {
@@ -62,7 +61,7 @@ const createUser = async (req, res, next) => {
   const newUser = req.body;
   newUser.password = hashPassword(newUser.password);
   try {
-    const [isUser, createUser] = await Promise.all([
+    const [isUser] = await Promise.all([
       userService.findOneByUsername(newUser.username),
       userService.create(newUser),
     ]);
@@ -142,8 +141,9 @@ const getProfile = async (req, res) => {
 };
 
 const fakeUser = async (req, res) => {
-  const arrNewUser = [];
+  
   try {
+    const arrNewUser = [];
     for (let i = 0; i < 30; i++) {
       const newUser = new User();
       newUser.username = faker.internet.userName();

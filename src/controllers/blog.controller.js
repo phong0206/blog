@@ -12,6 +12,7 @@ const mongoose = require("mongoose");
 const moment = require("moment");
 const apiResponse = require("../utils/apiResponse");
 const { getAllData } = require("../utils/query.utils");
+const _ = require("lodash");
 
 const EventEmitter = require("events");
 const ee = new EventEmitter();
@@ -38,6 +39,7 @@ exports.getAllBlog = async (req, res, next) => {
   try {
     const data = await getAllData(req, res, blogService);
 
+    // let view = _.sumBy(data,)
     for (let i = 0; i < data.data.length; i++) {
       let view = await viewService.getAllViewsById(data.data[i].id);
       await blogService.updateById(data.data[i].id, { view: view });
@@ -64,13 +66,14 @@ exports.createBlog = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     if (files) {
-      for (const file of files) {
+      _.each(files, (file) => {
         photos.push(file);
-      }
+      });
+
       const savedImage = await imageService.insertMany(photos);
-      for (const img of savedImage) {
+      _.each(savedImage, (img) => {
         arrImageIds.push(img._id);
-      }
+      });
     }
     const blogData = { ...data, userId: userId, imageId: arrImageIds || [] };
     await blogService.create(blogData);
@@ -212,41 +215,32 @@ exports.getTop10Blogs = async (req, res) => {
 
 exports.fakeRandomBlogsAndViews = async (req, res) => {
   const numberOfIds = +req.query.numberOfIds || 50;
-  const arrNewBlogs = [];
-  let arrNewViews = [];
   try {
     //fake blog
     const randomUser = await userService.getRandomUsers(numberOfIds);
-    for (let i = 0; i < randomUser.length; i++) {
-      const blogData = {
-        title: faker.lorem.words(),
-        content: faker.lorem.paragraph({ min: 50, max: 100 }),
-        userId: randomUser[i]._id,
-        createdAt: faker.date.past(),
-      };
-      arrNewBlogs.push(blogData);
-    }
-
+    const arrNewBlogs = _.map(randomUser, (user) => ({
+      title: faker.lorem.words(),
+      content: faker.lorem.paragraph({ min: 50, max: 100 }),
+      userId: user._id,
+      createdAt: faker.date.past(),
+    }));
     const session = await mongoose.startSession();
     session.startTransaction();
     const newBlogs = await blogService.insertManyByFaker(arrNewBlogs);
     console.log(newBlogs[1]._id);
     // fake view
-    for (let i = 0; i < newBlogs.length; i++) {
-      const blog = newBlogs[i];
+    _.map(newBlogs, async (blog) => {
       const currentDate = moment();
-      for (let j = 1; j <= 30; j++) {
-        const viewData = {
-          amount: faker.number.int({ min: 0, max: 500 }),
-          blogId: blog._id,
-          date: moment(currentDate).subtract(j, "days").format("YYYY-MM-DD"),
-        };
-        arrNewViews.push(viewData);
-      }
-
+      const arrNewViews = _.times(30, (j) => ({
+        amount: faker.number.int({ min: 0, max: 500 }),
+        blogId: blog._id,
+        date: moment(currentDate)
+          .subtract(j + 1, "days")
+          .format("YYYY-MM-DD"),
+      }));
       await viewService.insertMany(arrNewViews);
-      arrNewViews = [];
-    }
+    });
+    
     await session.commitTransaction();
     session.endSession();
 

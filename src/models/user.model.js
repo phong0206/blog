@@ -6,7 +6,6 @@ const User = mongoose.Schema(
       required: true,
       unique: true,
       alphanumeric: true,
-      default: "admin123",
     },
     avatarId: { type: String },
     password: {
