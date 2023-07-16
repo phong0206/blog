@@ -1,5 +1,6 @@
 const { View } = require("../models");
 const _ = require("lodash");
+const moment = require("moment");
 exports.deleteMany = async (id) => View.deleteMany(id, { new: true });
 
 exports.findOne = async (data) => View.findOne(data);
@@ -18,3 +19,16 @@ exports.findFilter = async (data, select) =>
   View.find(data).select(select).sort({ date: -1 });
 
 exports.updateById = async (id, data) => View.findByIdAndUpdate(id, data);
+
+exports.upsertData = async (data, blog) =>
+  View.findOneAndUpdate(
+    data,
+    {
+      $inc: { amount: 1 },
+      $setOnInsert: {
+        date: moment().startOf("day").format("YYYY-MM-DD"),
+        blogId: blog?._id,
+      },
+    },
+    { upsert: true }
+  );

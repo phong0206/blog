@@ -14,27 +14,6 @@ const apiResponse = require("../utils/apiResponse");
 const { getAllData } = require("../utils/query.utils");
 const _ = require("lodash");
 
-const EventEmitter = require("events");
-const ee = new EventEmitter();
-
-ee.on("update-view-amount", async (currentView, blog) => {
-  try {
-    if (!currentView) {
-      await viewService.create({
-        amount: 1,
-        date: moment().startOf("day").format("YYYY-MM-DD"),
-        blogId: blog?._id,
-      });
-    } else {
-      await viewService.updateById(currentView._id, {
-        amount: currentView.amount + 1,
-      });
-    }
-  } catch (error) {
-    console.error("Error updating view amount:", error);
-  }
-});
-
 exports.getAllBlog = async (req, res, next) => {
   try {
     const data = await getAllData(req, res, blogService);
@@ -133,27 +112,32 @@ exports.detailBlog = async (req, res) => {
   try {
     const blog = await blogService.findById(blogId);
     const [currentView, viewAmountDetail] = await Promise.all([
-      viewService.findOne({
-        date: moment().startOf("day").format("YYYY-MM-DD"),
-        blogId: blogId,
-      }),
+      viewService.upsertData(
+        {
+          date: moment().startOf("day").format("YYYY-MM-DD"),
+          blogId: blogId,
+        },
+        blog
+      ),
       viewService.findFilter(
         {
-          date: { $gte: startDate },
+          date: {
+            $gte: startDate,
+            $lt: moment().startOf("day").format("YYYY-MM-DD"),
+          },
           blogId: blogId,
         },
         "date amount -_id"
       ),
     ]);
     if (!blog) return apiResponse.notFoundResponse(res, "Blog not found");
-    ee.emit("update-view-amount", currentView, blog);
     return apiResponse.successResponseWithData(
       res,
       "get details blog successfully",
       {
+        views_today: currentView ? currentView.amount + 1 : 1,
         detail: blog,
         detail_view_30days: viewAmountDetail,
-        views_today: currentView ? currentView.amount + 1 : 1,
       }
     );
   } catch (err) {
@@ -240,7 +224,7 @@ exports.fakeRandomBlogsAndViews = async (req, res) => {
       }));
       await viewService.insertMany(arrNewViews);
     });
-    
+
     await session.commitTransaction();
     session.endSession();
 
