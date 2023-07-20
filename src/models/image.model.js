@@ -18,5 +18,6 @@ const Image = mongoose.Schema(
     timestamps: true,
   }
 );
+Image.statics.protectedFields = ["_id", "__v"];
 
 module.exports = mongoose.model("Image", Image);

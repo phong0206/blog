@@ -1,11 +1,18 @@
 const mongoose = require("mongoose");
+const validator = require("validator");
+
 const User = mongoose.Schema(
   {
-    username: {
+    email: {
       type: String,
       required: true,
       unique: true,
-      alphanumeric: true,
+      validate: {
+        validator: function (value) {
+          return validator.isEmail(value);
+        },
+        message: "Email is not valid",
+      },
     },
     avatarId: { type: String },
     password: {
@@ -17,6 +24,7 @@ const User = mongoose.Schema(
     name: {
       type: String,
       minlength: [6, "Name must be at least 6 characters long"],
+      required: true,
       name: "admin",
     },
     phonenumber: {
@@ -29,10 +37,15 @@ const User = mongoose.Schema(
       default: 20,
     },
     isAdmin: { type: Boolean, default: false },
+    verified: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
   }
 );
+User.statics.protectedFields = ["_id", "__v"];
 
 module.exports = mongoose.model("User", User);

@@ -5,13 +5,12 @@ const {
   viewService,
   imageService,
 } = require("../services");
-const { View } = require("../models");
 const fs = require("fs");
 const path = require("path");
 const mongoose = require("mongoose");
 const moment = require("moment");
 const apiResponse = require("../utils/apiResponse");
-const { getAllData } = require("../utils/query.utils");
+const { getAllData } = require("../utils/query.util");
 const _ = require("lodash");
 
 exports.getAllBlog = async (req, res, next) => {
@@ -36,8 +35,9 @@ exports.getAllBlog = async (req, res, next) => {
 };
 
 exports.createBlog = async (req, res) => {
-  const data = { ...req.body };
-  const userId = req.user.id;
+  const data = { ...req.body, author: req.user.name };
+  console.log(req.user);
+  const userId = req.id;
   const files = req.files;
   const photos = [];
   const arrImageIds = [];
@@ -75,7 +75,7 @@ exports.createBlog = async (req, res) => {
 
 exports.deleteBlog = async (req, res) => {
   const { blogId } = req.params;
-  const userId = req.user.id;
+  const userId = req.id;
   try {
     const blog = await blogService.findById(blogId);
     if (blog.userId.toString() === userId) {
@@ -148,7 +148,7 @@ exports.detailBlog = async (req, res) => {
 
 exports.updateBlog = async (req, res) => {
   const { blogId } = req.params;
-  const userId = req.user.id;
+  const userId = req.id;
   const data = { ...req.body };
   try {
     const blog = await blogService.findById(blogId);

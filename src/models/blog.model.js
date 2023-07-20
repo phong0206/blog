@@ -11,6 +11,7 @@ const Blog = mongoose.Schema(
       required: true,
     },
     userId: { type: mongoose.Schema.Types.ObjectId },
+    author: { type: String, required: true },
     view: { type: Number },
     imageId: { type: [String] },
   },
@@ -18,5 +19,5 @@ const Blog = mongoose.Schema(
     timestamps: true,
   }
 );
-
+Blog.statics.protectedFields = ["_id", "__v"];
 module.exports = mongoose.model("Blog", Blog);

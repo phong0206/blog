@@ -15,5 +15,6 @@ const View = mongoose.Schema(
     timestamps: true,
   }
 );
+View.statics.protectedFields = ["_id", "__v"];
 
 module.exports = mongoose.model("View", View);

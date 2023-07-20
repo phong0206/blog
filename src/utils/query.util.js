@@ -45,8 +45,8 @@ const getQueryFilter = (req) => {
       }
     }
   }
-  if (req.query.username) {
-    filter.username = req.query.username;
+  if (req.query.email) {
+    filter.email = req.query.email;
   }
   return filter;
 };

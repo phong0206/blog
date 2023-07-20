@@ -3,6 +3,8 @@ const { blogController } = require("../controllers");
 const { auth, checkAdminAuth } = require("../middlewares/auth");
 const router = express.Router();
 const { upload } = require("../config/multer.config");
+const { validate } = require("express-validation");
+const { getAllBlog } = require("../validations/auth.validation");
 
 /**
  * @swagger
@@ -89,7 +91,7 @@ const { upload } = require("../config/multer.config");
  *       500:
  *         description: Server Error
  */
-router.get("/get-all-blogs", blogController.getAllBlog);
+router.get("/get-all-blogs", validate(getAllBlog), blogController.getAllBlog);
 
 /**
  * @swagger
@@ -353,6 +355,11 @@ router.get("/get-top-10-blogs", auth, blogController.getTop10Blogs);
  *       500:
  *         description: server error
  */
-router.get("/fake-random", auth, blogController.fakeRandomBlogsAndViews);
+router.get(
+  "/fake-random",
+  auth,
+  checkAdminAuth,
+  blogController.fakeRandomBlogsAndViews
+);
 
 module.exports = router;

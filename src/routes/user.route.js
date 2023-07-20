@@ -1,9 +1,15 @@
 const express = require("express");
-const { login, register } = require("../validations/auth.validation");
+const {
+  login,
+  register,
+  getAllUser,
+} = require("../validations/auth.validation");
 const { userController } = require("../controllers");
 const { validate } = require("express-validation");
 const { auth, checkAdminAuth } = require("../middlewares/auth");
 const router = express.Router();
+
+router.get("/verify", userController.verifyRegister);
 
 /**
  * @swagger
@@ -18,9 +24,9 @@ const router = express.Router();
  *     User:
  *       type: object
  *       properties:
- *         username:
+ *         email:
  *           type: string
- *           description: User name
+ *           description: Email
  *         password:
  *           type: string
  *           format: password
@@ -41,14 +47,14 @@ const router = express.Router();
  *           type: boolean
  *           example: false
  *       required:
- *         - username
+ *         - email
  *         - password
  */
 /**
  * @swagger
  * /user/auth/register:
  *   post:
- *     summary: Register a user with the specified username and password
+ *     summary: Register a user with the specified email and password
  *     tags: [Users]
  *     requestBody:
  *       required: true
@@ -75,7 +81,7 @@ router.post("/register", validate(register), userController.register);
  * @swagger
  * /user/auth/login:
  *   post:
- *     summary: Login a user with the specified username and password
+ *     summary: Login a user with the specified email and password
  *     tags: [Users]
  *     requestBody:
  *       required: true
@@ -123,7 +129,7 @@ router.post("/login", validate(login), userController.login);
  *         name: sort
  *         schema:
  *           type: string
- *         description: sort the users 
+ *         description: sort the users
  *       - in: query
  *         name: name
  *         schema:
@@ -143,7 +149,7 @@ router.post("/login", validate(login), userController.login);
  *         name: age[gt]
  *         schema:
  *           type: number
- *         description: the age of the user is greater than 
+ *         description: the age of the user is greater than
  *       - in: query
  *         name: currentPage
  *         schema:
@@ -163,7 +169,13 @@ router.post("/login", validate(login), userController.login);
  *       500:
  *         description: Server Error
  */
-router.get("/get-all-users", auth, checkAdminAuth, userController.getListUsers);
+router.get(
+  "/get-all-users",
+  auth,
+  validate(getAllUser),
+  checkAdminAuth,
+  userController.getListUsers
+);
 /**
  * @swagger
  * components:
@@ -350,7 +362,7 @@ router.delete("/delete/:id", userController.deleteUser);
  *   put:
  *     summary: update  user by ID
  *     tags: [Users]
-  *     requestBody:
+ *     requestBody:
  *       required: true
  *       content:
  *         application/json:
@@ -377,5 +389,5 @@ router.delete("/delete/:id", userController.deleteUser);
  *       500:
  *         description: server error
  */
-router.put("/update/:id", userController.updateUser);
+router.put("/update", auth, userController.updateUser);
 module.exports = router;

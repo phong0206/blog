@@ -23,3 +23,18 @@ exports.verifyToken = (token, secret) => {
     console.error("Error verifying token:", err);
   }
 };
+
+exports.generateVerifyToken = (email) => {
+  try {
+    return jwt.sign(
+      {
+        email: email,
+      },
+      config.VERIFY_TOKEN_SECRET,
+      { expiresIn: "5m" },
+      { algorithm: "RS256" }
+    );
+  } catch (err) {
+    console.error("Error generating token:", err);
+  }
+};

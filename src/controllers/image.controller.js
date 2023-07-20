@@ -18,7 +18,7 @@ ee.on("save-avatarId-to-UserDb", async (userId, savedImage) => {
 
 
 const uploadAvatar = async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.id;
   try {
     if (req.file) {
       const data = { ...req.file };
@@ -46,7 +46,7 @@ const uploadAvatar = async (req, res) => {
 };
 
 const changeAvatar = async (req, res, next) => {
-  const userId = req.user.id;
+  const userId = req.id;
   const imageChange = { ...req.file };
   const avatarId = req.user.avatarId;
   try {
@@ -89,7 +89,7 @@ const changeAvatar = async (req, res, next) => {
 
 const deleteAvatar = async (req, res) => {
   const { id } = req.params;
-  const userId = req.user.id;
+  const userId = req.id;
   try {
     if (!id) return apiResponse.notFoundResponse(res, "Id not found");
     const image = await imageService.findById({ _id: id });

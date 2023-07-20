@@ -2,11 +2,9 @@ const { User } = require("../models");
 
 exports.create = async (data) => User.create(data);
 
-exports.findOneByUsername = async (username) =>
-  User.findOne({ username }).lean();
+exports.findOneByEmail = async (email) => User.findOne({ email }).lean();
 
 exports.findOneById = async (userId) => User.findById(userId);
-
 
 exports.findAll = async (f, q, k, l) => User.find(f).sort(q).skip(k).limit(l);
 
@@ -22,7 +20,7 @@ exports.deleteById = async (userId) =>
 
 exports.insertMany = async (data) => User.insertMany(data, { new: true });
 
-exports.getAllUsers = async () => User.find()
+exports.getAllUsers = async () => User.find();
 
 exports.findFilter = async (data, select) => User.find(data).select(select);
 
@@ -31,3 +29,5 @@ exports.getRandomUsers = async (numberOfIds) =>
     { $sample: { size: numberOfIds } },
     { $project: { _id: 1 } },
   ]);
+exports.findOneAndUpdate = async (data, update) =>
+  User.findOneAndUpdate(data, update, { new: true });

@@ -1,31 +1,79 @@
 const bcrypt = require("bcryptjs");
 const { userService } = require("../services");
-const { hashPassword, comparePassword } = require("../utils/password.utils");
-const { generateAccessToken } = require("../utils/token.utils");
+const { hashData, compareData } = require("../utils/password.util");
+const {
+  generateAccessToken,
+  generateVerifyToken,
+  verifyToken,
+} = require("../utils/token.util");
 const { faker } = require("@faker-js/faker");
-const { getAllData } = require("../utils/query.utils");
+const { getAllData } = require("../utils/query.util");
 const { User } = require("../models");
 const apiResponse = require("../utils/apiResponse");
+const _ = require("lodash");
+const { sendMail } = require("../utils/mailer.util");
+const config = require("../config/config");
+
 const register = async (req, res) => {
   const data = { ...req.body };
   try {
-    const user = await userService.findOneByUsername(data.username);
-    if (user) return apiResponse.notFoundResponse(res, "User already exists");
-    data.password = hashPassword(data.password);
-    await userService.create(data);
-    return apiResponse.successResponse(res, "User created successfully");
+    const email = await userService.findOneByEmail(data.email);
+    if (email) return apiResponse.notFoundResponse(res, "Email already exists");
+    const encryptPass = hashData(data.password);
+    const registerUser = {
+      name: data.name,
+      email: data.email,
+      password: encryptPass,
+    };
+    await userService.create(registerUser);
+    const cookieToken = generateVerifyToken(registerUser);
+    res.cookie("temp_data", cookieToken, {
+      maxAge: 5 * 60 * 1000,
+      httpOnly: true,
+    });
+    const toEmail = `${config.APP_URL}/user/auth/verify`;
+
+    sendMail(data.email, "Register verify", "../views/sendMail", {
+      name: data.name,
+      verificationLink: toEmail,
+    });
+
+    return apiResponse.successResponse(
+      res,
+      "User account created. Please check your email for verification."
+    );
   } catch (err) {
     console.error(err);
     return apiResponse.ErrorResponse(res, err.message);
   }
 };
 
+const verifyRegister = async (req, res) => {
+  const cookieToken = req.cookies.temp_data;
+  try {
+    const userData = verifyToken(cookieToken, config.VERIFY_TOKEN_SECRET);
+    console.log(userData);
+    if (!userData) return apiResponse.notFoundResponse(res, "Forbidden");
+    await userService.findOneAndUpdate(
+      { email: userData.email.email },
+      {
+        verified: true,
+      }
+    );
+    return apiResponse.successResponse(res, "Verified successfully");
+  } catch (err) {
+    console.error(err);
+    return apiResponse.ErrorResponse(res, err.message);
+  }
+};
 const login = async (req, res) => {
   const data = { ...req.body };
   try {
-    const user = await userService.findOneByUsername(data.username);
-    if (!user) return apiResponse.notFoundResponse(res, "User not found");
-    const passwordIsValid = comparePassword(data.password, user.password);
+    const user = await userService.findOneByEmail(data.email);
+    if (_.isNil(user))
+      return apiResponse.notFoundResponse(res, "Email not found");
+    const passwordIsValid = compareData(data.password, user.password);
+    console.log(passwordIsValid);
     if (!passwordIsValid)
       return apiResponse.validationErrorWithData(
         res,
@@ -62,9 +110,10 @@ const createUser = async (req, res, next) => {
   newUser.password = hashPassword(newUser.password);
   try {
     const [isUser] = await Promise.all([
-      userService.findOneByUsername(newUser.username),
+      userService.findOneByEmail(newUser.email),
       userService.create(newUser),
     ]);
+
     if (isUser) return apiResponse.notFoundResponse(res, "User already exists");
     return apiResponse.successResponseWithData(res, "created successfully", {
       profile: newUser,
@@ -76,13 +125,14 @@ const createUser = async (req, res, next) => {
 };
 
 const updateUser = async (req, res, next) => {
-  const { id } = req.params;
+  const id = req.id;
   const data = req.body;
   try {
     const [isId] = await Promise.all([
       userService.findOneById(id),
       userService.updateById(id, data),
     ]);
+    console.log(id);
     if (!isId) return apiResponse.notFoundResponse(res, "User not found");
     return apiResponse.successResponse(res, "User updated successfully");
   } catch (err) {
@@ -141,18 +191,20 @@ const getProfile = async (req, res) => {
 };
 
 const fakeUser = async (req, res) => {
-  
+  const numberFakeUser = req.query.numberUser;
   try {
     const arrNewUser = [];
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < numberFakeUser; i++) {
       const newUser = new User();
-      newUser.username = faker.internet.userName();
+      newUser.email = faker.internet.email();
       password = faker.internet.password();
       newUser.password = bcrypt.hashSync(password, 10);
       newUser.age = faker.number.int({ min: 10, max: 60 });
       newUser.name = faker.person.fullName({ min: 3 });
       newUser.phonenumber = faker.phone.imei();
       arrNewUser.push(newUser);
+
+      console.log(newUser.email);
     }
     await userService.insertMany(arrNewUser);
     return apiResponse.successResponse(res, "success");
@@ -161,6 +213,7 @@ const fakeUser = async (req, res) => {
     return apiResponse.ErrorResponse(res, err.message);
   }
 };
+
 module.exports = {
   register,
   login,
@@ -171,4 +224,5 @@ module.exports = {
   createUser,
   updateUser,
   deleteUser,
+  verifyRegister,
 };

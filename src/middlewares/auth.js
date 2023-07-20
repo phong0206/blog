@@ -1,6 +1,6 @@
 const config = require("../config/config");
 const { findOneById } = require("../services/user.service");
-const { verifyToken } = require("../utils/token.utils");
+const { verifyToken } = require("../utils/token.util");
 const apiResponse = require("../utils/apiResponse");
 exports.auth = async (req, res, next) => {
   const authorization = req.headers.authorization;
@@ -9,7 +9,7 @@ exports.auth = async (req, res, next) => {
   }
   try {
     const token = authorization.split(" ")[1];
-    const { id } = await verifyToken(token, config.ACCESS_TOKEN_SECRET);
+    const { id } = verifyToken(token, config.ACCESS_TOKEN_SECRET);
     if (!id) {
       return apiResponse.notFoundResponse(res, "Invalid token");
     }
@@ -18,7 +18,7 @@ exports.auth = async (req, res, next) => {
       return apiResponse.notFoundResponse(res, "Invalid user");
     }
     req.user = user;
-    req.user.isAdmin = user.isAdmin;
+    req.id = id;
 
     next();
   } catch (err) {
