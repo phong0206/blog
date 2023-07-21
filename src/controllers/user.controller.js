@@ -54,7 +54,7 @@ const verifyRegister = async (req, res) => {
     const userData = verifyToken(cookieToken, config.VERIFY_TOKEN_SECRET);
     if (!userData) return apiResponse.notFoundResponse(res, "Forbidden");
     await userService.findOneAndUpdate(
-      { email: userData.email.email },
+      { email: userData.data.email },
       {
         verified: true,
       }
@@ -74,18 +74,19 @@ const getNewPassword = async (req, res) => {
     if (!userData) return apiResponse.notFoundResponse(res, "Forbidden");
     const newPassword = faker.internet.password();
     await userService.findOneAndUpdate(
-      { email: userData.email.email },
+      { email: userData.data.email },
       { password: hashData(newPassword) }
     );
     sendMail(
-      userData.email.email,
+      userData.data.email,
       "Get A New Password",
       "../views/getNewPassword",
       {
-        name: userData.email.name,
+        name: userData.data.name,
         newPassword: newPassword,
       }
     );
+    res.clearCookie("data");
 
     return apiResponse.successResponse(
       res,

@@ -28,7 +28,7 @@ exports.generateVerifyToken = (email) => {
   try {
     return jwt.sign(
       {
-        email: email,
+        data: email,
       },
       config.VERIFY_TOKEN_SECRET,
       { expiresIn: "5m" },
