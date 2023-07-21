@@ -6,10 +6,18 @@ const {
 } = require("../validations/auth.validation");
 const { userController } = require("../controllers");
 const { validate } = require("express-validation");
-const { auth, checkAdminAuth } = require("../middlewares/auth");
+const {
+  auth,
+  checkAdminAuth,
+  authVerifyAccount,
+} = require("../middlewares/auth");
 const router = express.Router();
 
+
+router.get("/get-new-password", userController.getNewPassword);
+
 router.get("/verify", userController.verifyRegister);
+
 
 /**
  * @swagger
@@ -48,8 +56,35 @@ router.get("/verify", userController.verifyRegister);
  *           example: false
  *       required:
  *         - email
- *         - password
+ *         
  */
+/**
+ * @swagger
+ * /user/auth/supply-new-password:
+ *   get:
+ *     summary: Register a user with the specified email and password
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/User'
+ *
+ *     responses:
+ *       200:
+ *         description: User registration successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Validation Failed
+ *       500:
+ *         description: Error server
+ */
+router.get("/supply-new-password", userController.supplyNewPassword);
+
 /**
  * @swagger
  * /user/auth/register:
@@ -102,7 +137,7 @@ router.post("/register", validate(register), userController.register);
  *       500:
  *         description: Error server
  */
-router.post("/login", validate(login), userController.login);
+router.post("/login", validate(login), authVerifyAccount, userController.login);
 /**
  * @swagger
  * components:

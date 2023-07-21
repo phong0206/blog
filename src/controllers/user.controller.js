@@ -52,7 +52,6 @@ const verifyRegister = async (req, res) => {
   const cookieToken = req.cookies.temp_data;
   try {
     const userData = verifyToken(cookieToken, config.VERIFY_TOKEN_SECRET);
-    console.log(userData);
     if (!userData) return apiResponse.notFoundResponse(res, "Forbidden");
     await userService.findOneAndUpdate(
       { email: userData.email.email },
@@ -61,6 +60,67 @@ const verifyRegister = async (req, res) => {
       }
     );
     return apiResponse.successResponse(res, "Verified successfully");
+  } catch (err) {
+    console.error(err);
+    return apiResponse.ErrorResponse(res, err.message);
+  }
+};
+
+const getNewPassword = async (req, res) => {
+  const cookieToken = req.cookies.data;
+  try {
+    const userData = verifyToken(cookieToken, config.VERIFY_TOKEN_SECRET);
+    console.log(userData);
+    if (!userData) return apiResponse.notFoundResponse(res, "Forbidden");
+    const newPassword = faker.internet.password();
+    await userService.findOneAndUpdate(
+      { email: userData.email.email },
+      { password: hashData(newPassword) }
+    );
+    sendMail(
+      userData.email.email,
+      "Get A New Password",
+      "../views/getNewPassword",
+      {
+        name: userData.email.name,
+        newPassword: newPassword,
+      }
+    );
+
+    return apiResponse.successResponse(
+      res,
+      "Supply password updated successfully"
+    );
+  } catch (err) {
+    console.error(err);
+    return apiResponse.ErrorResponse(res, err.message);
+  }
+};
+
+const supplyNewPassword = async (req, res) => {
+  const email = req.body.email;
+  try {
+    const user = await userService.findOneByEmail(email);
+    if (!user) return apiResponse.notFoundResponse(res, "User not found");
+    const dataEncode = {
+      name: user.name,
+      email: user.email,
+    };
+    const cookieToken = generateVerifyToken(dataEncode);
+    res.cookie("data", cookieToken, {
+      maxAge: 5 * 60 * 1000,
+      httpOnly: true,
+    });
+    const toEmail = `${config.APP_URL}/user/auth/get-new-password`;
+
+    sendMail(email, "Supply A New Password", "../views/supplyNewPassword", {
+      name: user.name,
+      verificationLink: toEmail,
+    });
+    return apiResponse.successResponse(
+      res,
+      "Please check your email for supply new password."
+    );
   } catch (err) {
     console.error(err);
     return apiResponse.ErrorResponse(res, err.message);
@@ -225,4 +285,6 @@ module.exports = {
   updateUser,
   deleteUser,
   verifyRegister,
+  supplyNewPassword,
+  getNewPassword,
 };
