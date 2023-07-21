@@ -13,11 +13,9 @@ const {
 } = require("../middlewares/auth");
 const router = express.Router();
 
-
 router.get("/get-new-password", userController.getNewPassword);
 
 router.get("/verify", userController.verifyRegister);
-
 
 /**
  * @swagger
@@ -56,13 +54,12 @@ router.get("/verify", userController.verifyRegister);
  *           example: false
  *       required:
  *         - email
- *         
  */
 /**
  * @swagger
  * /user/auth/supply-new-password:
- *   get:
- *     summary: Register a user with the specified email and password
+ *   post:
+ *     summary: supply new password
  *     tags: [Users]
  *     requestBody:
  *       required: true
@@ -73,7 +70,7 @@ router.get("/verify", userController.verifyRegister);
  *
  *     responses:
  *       200:
- *         description: User registration successful
+ *         description: check your mail to get new password
  *         content:
  *           application/json:
  *             schema:
@@ -83,7 +80,7 @@ router.get("/verify", userController.verifyRegister);
  *       500:
  *         description: Error server
  */
-router.get("/supply-new-password", userController.supplyNewPassword);
+router.post("/supply-new-password", userController.supplyNewPassword);
 
 /**
  * @swagger
@@ -359,7 +356,7 @@ router.post("/create-user", auth, checkAdminAuth, userController.createUser);
  *   - bearerAuth: []
  * /user/auth/delete/{id}:
  *   delete:
- *     summary: delete all user
+ *     summary: delete user by id
  *     tags: [Users]
  *     parameters:
  *       - in: path

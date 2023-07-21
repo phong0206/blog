@@ -230,7 +230,7 @@ router.put("/update-blog/:blogId", auth, blogController.updateBlog);
  *   - bearerAuth: []
  * /blog/auth/detail-blog/{id}:
  *   get:
- *     summary: delete all user
+ *     summary: get detail blog by id
  *     tags: [Blogs]
  *     parameters:
  *       - in: path
@@ -269,7 +269,7 @@ router.get("/detail-blog/:blogId", blogController.detailBlog);
  *
  * /blog/auth/get-detail-blogs-30days:
  *   get:
- *     summary: get profile user
+ *     summary: get detail blog 30 days
  *     tags: [Blogs]
  *     security:
  *       - bearerAuth: []
@@ -301,13 +301,13 @@ router.get("/get-detail-blogs-30days", blogController.getBlog30Days);
  *
  * /blog/auth/get-top-10-blogs:
  *   get:
- *     summary: create user
+ *     summary: get top 10 blog 
  *     tags: [Blogs]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: create blog successful
+ *         description: get blogs successful
  *         content:
  *           application/json:
  *             schema:
@@ -332,8 +332,8 @@ router.get("/get-top-10-blogs", auth, blogController.getTop10Blogs);
  *   - bearerAuth: []
  *
  * /blog/auth/fake-random:
- *   get:
- *     summary: create user
+ *   post:
+ *     summary: fake blog successfully
  *     tags: [Blogs]
  *     parameters:
  *       - in: query
@@ -355,7 +355,7 @@ router.get("/get-top-10-blogs", auth, blogController.getTop10Blogs);
  *       500:
  *         description: server error
  */
-router.get(
+router.post(
   "/fake-random",
   auth,
   checkAdminAuth,

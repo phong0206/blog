@@ -17,8 +17,8 @@ const config = require("../config/config");
 const register = async (req, res) => {
   const data = { ...req.body };
   try {
-    const email = await userService.findOneByEmail(data.email);
-    if (email) return apiResponse.notFoundResponse(res, "Email already exists");
+    const user = await userService.findOneByEmail(data.email);
+    if (user) return apiResponse.notFoundResponse(res, "Email already exists");
     const encryptPass = hashData(data.password);
     const registerUser = {
       name: data.name,
@@ -70,7 +70,6 @@ const getNewPassword = async (req, res) => {
   const cookieToken = req.cookies.data;
   try {
     const userData = verifyToken(cookieToken, config.VERIFY_TOKEN_SECRET);
-    console.log(userData);
     if (!userData) return apiResponse.notFoundResponse(res, "Forbidden");
     const newPassword = faker.internet.password();
     await userService.findOneAndUpdate(
