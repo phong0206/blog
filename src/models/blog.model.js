@@ -4,11 +4,11 @@ const Blog = mongoose.Schema(
   {
     title: {
       type: String,
-      required: true,
+      required: [true, "Please provide title"],
     },
     content: {
       type: String,
-      required: true,
+      required: [true, "Please provide content"],
     },
     userId: { type: mongoose.Schema.Types.ObjectId },
     author: { type: String, required: true },

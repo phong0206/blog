@@ -31,3 +31,6 @@ exports.getRandomUsers = async (numberOfIds) =>
   ]);
 exports.findOneAndUpdate = async (data, update) =>
   User.findOneAndUpdate(data, update, { new: true });
+
+exports.upsertData = async (filter, data) =>
+  User.updateOne(filter, { $push: data  });

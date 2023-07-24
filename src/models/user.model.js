@@ -5,7 +5,7 @@ const User = mongoose.Schema(
   {
     email: {
       type: String,
-      required: true,
+      required: [true, "Please provide email"],
       unique: true,
       validate: {
         validator: function (value) {
@@ -18,13 +18,13 @@ const User = mongoose.Schema(
     password: {
       type: String,
       minlength: [6, "Password must be at least 6 characters long"],
-      required: true,
+      required: [true, "Please provide password"],
       default: "admin123",
     },
     name: {
       type: String,
-      minlength: [6, "Name must be at least 6 characters long"],
-      required: true,
+      minlength: [3, "Name must be at least 6 characters long"],
+      required: [true, "Please provide name"],
       name: "admin",
     },
     phonenumber: {
@@ -41,6 +41,7 @@ const User = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    friends: { type: [String] },
   },
   {
     timestamps: true,

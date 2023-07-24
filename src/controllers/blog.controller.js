@@ -12,12 +12,12 @@ const moment = require("moment");
 const apiResponse = require("../utils/apiResponse");
 const { getAllData } = require("../utils/query.util");
 const _ = require("lodash");
+const { sendMail } = require("../utils/mailer.util");
+const config = require("../config/config");
 
 exports.getAllBlog = async (req, res, next) => {
   try {
     const data = await getAllData(req, res, blogService);
-
-    // let view = _.sumBy(data,)
     for (let i = 0; i < data.data.length; i++) {
       let view = await viewService.getAllViewsById(data.data[i].id);
       await blogService.updateById(data.data[i].id, { view: view });
@@ -36,26 +36,39 @@ exports.getAllBlog = async (req, res, next) => {
 
 exports.createBlog = async (req, res) => {
   const data = { ...req.body, author: req.user.name };
-  console.log(req.user);
   const userId = req.id;
   const files = req.files;
   const photos = [];
   const arrImageIds = [];
   try {
+    const user = await userService.findOneById(userId);
     const session = await mongoose.startSession();
     session.startTransaction();
     if (files) {
       _.each(files, (file) => {
         photos.push(file);
       });
-
       const savedImage = await imageService.insertMany(photos);
       _.each(savedImage, (img) => {
         arrImageIds.push(img._id);
       });
     }
     const blogData = { ...data, userId: userId, imageId: arrImageIds || [] };
-    await blogService.create(blogData);
+    const newBlog = await blogService.create(blogData);
+    const toEmail = `${config.APP_URL}/blog/auth/detail-blog/${newBlog._id}`;
+    _.each(user.friends, async (idFriend) => {
+      const friend = await userService.findOneById({ _id: idFriend });
+      sendMail(
+        friend.email,
+        `${user.name} just posted a new blog`,
+        "../views/notificationForNewBlog",
+        {
+          name: friend.name,
+          userPost: user.name,
+          verificationLink: toEmail,
+        }
+      );
+    });
 
     await session.commitTransaction();
     session.endSession();

@@ -13,7 +13,9 @@ const {
 } = require("../middlewares/auth");
 const router = express.Router();
 
-router.get("/get-new-password", userController.getNewPassword);
+router.post("/addfriend/:id", auth, userController.addFriend);
+
+router.delete("/unfriend/:id", auth, userController.unFriendOrRevokeFrReq);
 
 router.get("/verify", userController.verifyRegister);
 

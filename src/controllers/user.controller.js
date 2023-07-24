@@ -1,5 +1,5 @@
 const bcrypt = require("bcryptjs");
-const { userService } = require("../services");
+const { userService, userConnectionService } = require("../services");
 const { hashData, compareData } = require("../utils/password.util");
 const {
   generateAccessToken,
@@ -16,16 +16,18 @@ const config = require("../config/config");
 
 const register = async (req, res) => {
   const data = { ...req.body };
+  const encryptPass = hashData(data.password);
+  const registerUser = {
+    name: data.name,
+    email: data.email,
+    password: encryptPass,
+  };
   try {
-    const user = await userService.findOneByEmail(data.email);
+    const [user] = await Promise.all([
+      userService.findOneByEmail(data.email),
+      userService.create(registerUser),
+    ]);
     if (user) return apiResponse.notFoundResponse(res, "Email already exists");
-    const encryptPass = hashData(data.password);
-    const registerUser = {
-      name: data.name,
-      email: data.email,
-      password: encryptPass,
-    };
-    await userService.create(registerUser);
     const cookieToken = generateVerifyToken(registerUser);
     res.cookie("temp_data", cookieToken, {
       maxAge: 5 * 60 * 1000,
@@ -50,8 +52,8 @@ const register = async (req, res) => {
 
 const verifyRegister = async (req, res) => {
   const cookieToken = req.cookies.temp_data;
+  const userData = verifyToken(cookieToken, config.VERIFY_TOKEN_SECRET);
   try {
-    const userData = verifyToken(cookieToken, config.VERIFY_TOKEN_SECRET);
     if (!userData) return apiResponse.notFoundResponse(res, "Forbidden");
     await userService.findOneAndUpdate(
       { email: userData.data.email },
@@ -60,37 +62,6 @@ const verifyRegister = async (req, res) => {
       }
     );
     return apiResponse.successResponse(res, "Verified successfully");
-  } catch (err) {
-    console.error(err);
-    return apiResponse.ErrorResponse(res, err.message);
-  }
-};
-
-const getNewPassword = async (req, res) => {
-  const cookieToken = req.cookies.data;
-  try {
-    const userData = verifyToken(cookieToken, config.VERIFY_TOKEN_SECRET);
-    if (!userData) return apiResponse.notFoundResponse(res, "Forbidden");
-    const newPassword = faker.internet.password();
-    await userService.findOneAndUpdate(
-      { email: userData.data.email },
-      { password: hashData(newPassword) }
-    );
-    sendMail(
-      userData.data.email,
-      "Get A New Password",
-      "../views/getNewPassword",
-      {
-        name: userData.data.name,
-        newPassword: newPassword,
-      }
-    );
-    res.clearCookie("data");
-
-    return apiResponse.successResponse(
-      res,
-      "Supply password updated successfully"
-    );
   } catch (err) {
     console.error(err);
     return apiResponse.ErrorResponse(res, err.message);
@@ -126,6 +97,37 @@ const supplyNewPassword = async (req, res) => {
     return apiResponse.ErrorResponse(res, err.message);
   }
 };
+
+const getNewPassword = async (req, res) => {
+  const cookieToken = req.cookies.data;
+  const userData = verifyToken(cookieToken, config.VERIFY_TOKEN_SECRET);
+  try {
+    if (!userData) return apiResponse.notFoundResponse(res, "Forbidden");
+    const newPassword = faker.internet.password();
+    await userService.findOneAndUpdate(
+      { email: userData.data.email },
+      { password: hashData(newPassword) }
+    );
+    sendMail(
+      userData.data.email,
+      "Get A New Password",
+      "../views/getNewPassword",
+      {
+        name: userData.data.name,
+        newPassword: newPassword,
+      }
+    );
+    res.clearCookie("data");
+
+    return apiResponse.successResponse(
+      res,
+      "Supply password updated successfully"
+    );
+  } catch (err) {
+    console.error(err);
+    return apiResponse.ErrorResponse(res, err.message);
+  }
+};
 const login = async (req, res) => {
   const data = { ...req.body };
   try {
@@ -133,7 +135,6 @@ const login = async (req, res) => {
     if (_.isNil(user))
       return apiResponse.notFoundResponse(res, "Email not found");
     const passwordIsValid = compareData(data.password, user.password);
-    console.log(passwordIsValid);
     if (!passwordIsValid)
       return apiResponse.validationErrorWithData(
         res,
@@ -159,6 +160,51 @@ const deleteAllUsers = async (req, res, next) => {
   try {
     await userService.deleteAllUsers();
     return apiResponse.successResponse(res, "Successfully deleted all users");
+  } catch (err) {}
+};
+
+const addFriend = async (req, res, next) => {
+  const id = req.params.id;
+
+  try {
+    const [addUser, userConnection] = await Promise.all([
+      userService.findOneById(id),
+      userConnectionService.findOneByField({
+        from_user: req.id,
+        to_user: id,
+      }),
+    ]);
+
+    if (userConnection)
+      return apiResponse.ErrorResponse(res, "request already exists");
+
+    if (!addUser) return apiResponse.notFoundResponse(res, "User not found");
+
+    await userConnectionService.create({
+      from_user: req.id,
+      to_user: id,
+      status: "pending",
+    });
+    await userService.upsertData({ _id: req.id }, { friends: id });
+
+    return apiResponse.successResponse(res, "Successfully added friend");
+  } catch (err) {
+    console.error(err);
+    return apiResponse.ErrorResponse(res, err.message);
+  }
+};
+
+const unFriendOrRevokeFrReq = async (req, res, next) => {
+  const id = req.params.id;
+  try {
+    const request = await userConnectionService.findOneByField({ to_user: id });
+    if (!request)
+      return apiResponse.notFoundResponse(res, "friend request do not exist");
+    await userConnectionService.findOneAndDelete({ to_user: id });
+    return apiResponse.successResponse(
+      res,
+      "unfriend or revoke friend request successfully"
+    );
   } catch (err) {
     console.error(err);
     return apiResponse.ErrorResponse(res, err.message);
@@ -192,7 +238,6 @@ const updateUser = async (req, res, next) => {
       userService.findOneById(id),
       userService.updateById(id, data),
     ]);
-    console.log(id);
     if (!isId) return apiResponse.notFoundResponse(res, "User not found");
     return apiResponse.successResponse(res, "User updated successfully");
   } catch (err) {
@@ -287,4 +332,6 @@ module.exports = {
   verifyRegister,
   supplyNewPassword,
   getNewPassword,
+  addFriend,
+  unFriendOrRevokeFrReq,
 };

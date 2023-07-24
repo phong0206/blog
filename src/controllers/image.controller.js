@@ -16,7 +16,6 @@ ee.on("save-avatarId-to-UserDb", async (userId, savedImage) => {
   }
 });
 
-
 const uploadAvatar = async (req, res) => {
   const userId = req.id;
   try {
@@ -62,14 +61,14 @@ const changeAvatar = async (req, res, next) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
-    const [updateImg, deleteImg, savedImage] = await Promise.all([
+    const [savedImage] = await Promise.all([
+      imageService.create(imageChange),
       //delete avatarId
       userService.updateById(userId, {
         $unset: { avatarId: avatarId },
       }),
       // delete document image
       imageService.deleteById(avatarId),
-      imageService.create(imageChange),
     ]);
     // upload new avatar
     ee.emit("save-avatarId-to-UserDb", userId, savedImage);

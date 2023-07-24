@@ -7,7 +7,8 @@ const { sendMail } = require("../utils/mailer.util");
 
 exports.auth = async (req, res, next) => {
   const authorization = req.headers.authorization;
-  if (!authorization) return apiResponse.notFoundResponse(res, "Authorization");
+  if (!authorization || !authorization.startsWith("Bearer "))
+    return apiResponse.notFoundResponse(res, "Authorization");
   try {
     const token = authorization.split(" ")[1];
 
