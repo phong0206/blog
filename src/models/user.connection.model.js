@@ -8,7 +8,7 @@ const User_Connection = mongoose.Schema(
     to_user: {
       type: String,
     },
-    status: { type: String },
+    status: { type: String, enum: ['pending', 'connected'] },
   },
   {
     timestamps: true,

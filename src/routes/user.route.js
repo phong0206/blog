@@ -13,9 +13,24 @@ const {
 } = require("../middlewares/auth");
 const router = express.Router();
 
-router.post("/addfriend/:id", auth, userController.addFriend);
+router.post("/addfriend/:id", auth, userController.sendReqAddFriend);
 
-router.delete("/unfriend/:id", auth, userController.unFriendOrRevokeFrReq);
+router.post(
+  "/accept-friend/:friendId",
+  auth,
+  userController.acceptFriendRequest
+);
+
+router.delete(
+  "/revoke-friend-request/:id",
+  auth,
+  userController.revokeFriendRequest
+);
+router.delete(
+  "/unfriend/:id",
+  auth,
+  userController.unfriend
+);
 
 router.get("/verify", userController.verifyRegister);
 

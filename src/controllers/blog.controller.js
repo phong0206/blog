@@ -4,6 +4,7 @@ const {
   userService,
   viewService,
   imageService,
+  commentService,
 } = require("../services");
 const fs = require("fs");
 const path = require("path");
@@ -80,6 +81,27 @@ exports.createBlog = async (req, res) => {
         detail: blogData,
       }
     );
+  } catch (err) {
+    console.error(err);
+    return apiResponse.ErrorResponse(res, err.message);
+  }
+};
+
+exports.commentBlog = async (req, res) => {
+  const content = req.body.content;
+  const idBlog = req.params.idBlog;
+  const idUser = req.id;
+  try {
+    const blog = await blogService.findById(idBlog);
+    if (!blog) return apiResponse.notFoundResponse(res, "Blog not found");
+    await commentService.create({
+      id_blog: idBlog,
+      id_user: idUser,
+      content: content,
+    });
+    return apiResponse.successResponseWithData(res, "Commented successfully", {
+      data: content,
+    });
   } catch (err) {
     console.error(err);
     return apiResponse.ErrorResponse(res, err.message);

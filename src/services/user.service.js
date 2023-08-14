@@ -33,4 +33,7 @@ exports.findOneAndUpdate = async (data, update) =>
   User.findOneAndUpdate(data, update, { new: true });
 
 exports.upsertData = async (filter, data) =>
-  User.updateOne(filter, { $push: data  });
+  User.updateOne(filter, { $push: data });
+
+exports.deleteDataFromArray = async (filter, data) =>
+  User.updateOne(filter, { $pull: data });

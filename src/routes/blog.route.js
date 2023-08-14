@@ -6,6 +6,8 @@ const { upload } = require("../config/multer.config");
 const { validate } = require("express-validation");
 const { getAllBlog } = require("../validations/auth.validation");
 
+
+
 /**
  * @swagger
  * tags:
@@ -34,6 +36,9 @@ const { getAllBlog } = require("../validations/auth.validation");
  *         - title
  *         - content
  */
+
+router.post("/comment-blog/:idBlog", auth, blogController.commentBlog);
+
 
 /**
  * @swagger
