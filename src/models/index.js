@@ -1,9 +1,10 @@
-const mongoose = require('mongoose')
-mongoose.Promise = global.Promise;
+module.exports.User = require("./user.model");
+module.exports.Blog = require("./blog.model");
+module.exports.View = require("./view.model");
+module.exports.Image = require("./image.model");
+module.exports.User_Connection = require("./user.connection.model");
+module.exports.Comment = require("./comment.model");
 
-const db = {};
-db.mongoose = mongoose;
 
-db.user = require("./user.model.js")(mongoose);
 
-module.exports = db;
+
