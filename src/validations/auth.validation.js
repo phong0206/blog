@@ -26,19 +26,6 @@ exports.register = {
   }),
 };
 
-exports.getAllUser = {
-  query: Joi.object()
-    .keys({
-      currentPage: Joi.number().min(1),
-      limit: Joi.number().min(0),
-      name: Joi.string().allow(""),
-      age: Joi.number().min(6).max(100),
-      sort: Joi.string()
-        .valid(...SORT_BY_USER)
-        .allow(""),
-    })
-};
-
 exports.getAllBlog = {
   query: Joi.object()
     .keys({

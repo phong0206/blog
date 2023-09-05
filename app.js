@@ -8,7 +8,10 @@ const app = express();
 
 ConfigMongo.connectDatabase();
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(specs));
+
 app.use(cookieParser());
+
+//parse json request body
 app.use(express.json());
 
 app.use("/", routes);

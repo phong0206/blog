@@ -108,6 +108,28 @@ exports.commentBlog = async (req, res) => {
   }
 };
 
+exports.repComment = async (req, res) => {
+  const idComment = req.params.idComment;
+  const idUser = req.id;
+  const content = req.body.content;
+  try {
+    const comment = await comment.findOneById(idBlog);
+    if (!comment) return apiResponse.notFoundResponse(res, "Comment not found");
+
+    await commentService.create({
+      id_user: idUser,
+      content: content,
+      id_rep_comment: idComment,
+    });
+    return apiResponse.successResponseWithData(res, "Commented successfully", {
+      data: content,
+    });
+  } catch (err) {
+    console.error(err);
+    return apiResponse.ErrorResponse(res, err.message);
+  }
+};
+
 exports.deleteBlog = async (req, res) => {
   const { blogId } = req.params;
   const userId = req.id;

@@ -98,6 +98,8 @@ router.get("/verify", userController.verifyRegister);
  *         description: Error server
  */
 router.post("/supply-new-password", userController.supplyNewPassword);
+router.get("/get-new-password", userController.getNewPassword);
+
 
 /**
  * @swagger
@@ -221,7 +223,6 @@ router.post("/login", validate(login), authVerifyAccount, userController.login);
 router.get(
   "/get-all-users",
   auth,
-  validate(getAllUser),
   checkAdminAuth,
   userController.getListUsers
 );
