@@ -4,7 +4,7 @@ exports.create = async (data) => Comment.create(data);
 
 exports.findOneByEmail = async (email) => Comment.findOne({ email }).lean();
 
-exports.findOneById = async (userId) => Comment.findById(userId);
+exports.findOneById = async (Id) => Comment.findById(Id);
 
 exports.findAll = async (f, q, k, l) =>
   Comment.find(f).sort(q).skip(k).limit(l);
@@ -13,11 +13,11 @@ exports.deleteAllUsers = async () => Comment.deleteMany({});
 
 exports.countDocuments = async () => Comment.countDocuments();
 
-exports.updateById = async (userId, data) =>
-  Comment.findByIdAndUpdate(userId, data, { new: true });
+exports.updateById = async (Id, data) =>
+  Comment.findByIdAndUpdate(Id, data, { new: true });
 
-exports.deleteById = async (userId) =>
-  User.findByIdAndDelete(userId, { new: true });
+exports.deleteById = async (Id) =>
+  User.findByIdAndDelete(Id, { new: true });
 
 exports.insertMany = async (data) => Comment.insertMany(data, { new: true });
 

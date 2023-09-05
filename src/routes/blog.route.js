@@ -38,6 +38,7 @@ const { getAllBlog } = require("../validations/auth.validation");
  */
 
 router.post("/comment-blog/:idBlog", auth, blogController.commentBlog);
+router.post("/rep-comment-blog/:idComment", auth, blogController.repComment);
 
 
 /**

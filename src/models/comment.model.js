@@ -6,6 +6,11 @@ const Comment = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       required: true,
     },
+    id_rep_comment: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      default: null
+    },
     id_user: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
