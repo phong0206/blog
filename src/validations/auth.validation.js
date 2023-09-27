@@ -19,7 +19,7 @@ exports.register = {
   body: Joi.object().keys({
     email: Joi.string().min(3).email().required(),
     password: Joi.string().min(6).required(),
-    name: Joi.string().min(3),
+    name: Joi.string().min(3).required(),
     isAdmin: Joi.boolean(),
     phonenumber: Joi.string(),
     age: Joi.number().min(6).max(20),

@@ -37,11 +37,11 @@ const register = async (req, res) => {
     password: encryptPass,
   };
   try {
-    const [user] = await Promise.all([
-      userService.findOneByEmail(data.email),
-      userService.create(registerUser),
-    ]);
+    
+    const user = await userService.findOneByEmail(data.email)
     if (user) return apiResponse.notFoundResponse(res, "Email already exists");
+    
+    await userService.create(registerUser)
     const cookieToken = generateVerifyToken(registerUser);
     res.cookie("temp_data", cookieToken, {
       maxAge: 5 * 60 * 1000,
@@ -174,7 +174,7 @@ const deleteAllUsers = async (req, res, next) => {
   try {
     await userService.deleteAllUsers();
     return apiResponse.successResponse(res, "Successfully deleted all users");
-  } catch (err) {}
+  } catch (err) { }
 };
 
 const sendReqAddFriend = async (req, res, next) => {
