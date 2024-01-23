@@ -160,6 +160,7 @@ const login = async (req, res) => {
       { _id: user._id },
       "-password"
     );
+
     return apiResponse.successResponseWithData(res, "login successfully", {
       accessToken: accessToken,
       profile: profile,
@@ -322,9 +323,9 @@ const updateUser = async (req, res, next) => {
 const deleteUser = async (req, res, next) => {
   const { id } = req.params;
   try {
-    const [isId] = await Promise.all([
-      userService.findOneById(id),
-      userService.deleteById(id),
+    const [isId] = await Promise.all([ 
+      userService.findOneById(id), 
+      userService.deleteById(id),  
     ]);
     if (!isId) return apiResponse.notFoundResponse(res, "User not found");
     return apiResponse.successResponse(res, "User deleted successfully");

@@ -8,4 +8,5 @@ const storage = multer.diskStorage({
     cb(null, file.fieldname + "-" + uniqueSuffix);
   },
 });
+
 exports.upload = multer({ storage: storage })

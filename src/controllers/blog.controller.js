@@ -43,6 +43,7 @@ exports.createBlog = async (req, res) => {
   const arrImageIds = [];
   try {
     const user = await userService.findOneById(userId);
+
     const session = await mongoose.startSession();
     session.startTransaction();
     if (files) {
@@ -54,6 +55,7 @@ exports.createBlog = async (req, res) => {
         arrImageIds.push(img._id);
       });
     }
+    
     const blogData = { ...data, userId: userId, imageId: arrImageIds || [] };
     const newBlog = await blogService.create(blogData);
     const toEmail = `${config.APP_URL}/blog/auth/detail-blog/${newBlog._id}`;
