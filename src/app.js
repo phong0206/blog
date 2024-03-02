@@ -38,7 +38,7 @@ app.use(xss());
 app.use(mongoSanitize());
 
 //limit req
-app.use(limiter);
+//app.use(limiter);
 
 
 app.use("/", routes);
