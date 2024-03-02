@@ -1,0 +1,1 @@
+{"__version__":1,"totalSize":95724450,"count":15562,"data":{".dockerignore":[0,29],".env":[0,426],".env.example":[0,262],".git":[1,1085118],".gitignore":[0,37],".vscode":[1,45],"docker-compose.yml":[0,360],"Dockerfile":[0,238],"node_modules":[1,77704912],"package-lock.json":[0,231778],"package.json":[0,1185],"src":[1,73597],"tests":[1,99],"uploads":[1,16626364]}}

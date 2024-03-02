@@ -46,6 +46,7 @@ const register = async (req, res) => {
     res.cookie("temp_data", cookieToken, {
       maxAge: 5 * 60 * 1000,
       httpOnly: true,
+      secure: false
     });
     const toEmail = `${config.APP_URL}/user/auth/verify`;
 

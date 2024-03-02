@@ -9,6 +9,7 @@ const helmet = require("helmet");
 const xss = require("xss-clean");
 const mongoSanitize = require("express-mongo-sanitize");
 const { limiter } = require('./middlewares/rate.limiter.middleware')
+const config = require('./config/config')
 
 
 
@@ -17,7 +18,7 @@ const app = express();
 ConfigMongo.connectDatabase();
 
 const corsOptions = {
-  origin: 'http://localhost:5174',
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
   credentials: true,
   optionSuccessStatus: 200
 };
