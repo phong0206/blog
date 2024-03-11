@@ -50,7 +50,7 @@ exports.authVerifyAccount = async (req, res, next) => {
       });
       return apiResponse.notFoundResponse(
         res,
-        "Account not verified. Please check mail to verified account!"
+        "Account is not verified. Please check mail to verified account!"
       );
     }
     next();

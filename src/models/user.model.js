@@ -23,7 +23,7 @@ const User = mongoose.Schema(
     },
     name: {
       type: String,
-      minlength: [3, "Name must be at least 6 characters long"],
+      minlength: [3, "Name must be at least 3 characters long"],
       required: [true, "Please provide name"],
       name: "admin",
     },
