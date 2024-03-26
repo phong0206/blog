@@ -64,7 +64,15 @@ const register = async (req, res) => {
     return apiResponse.ErrorResponse(res, err.message);
   }
 };
-
+const logout = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(' ')[1];
+    await blacklistToken(token);
+    return apiResponse.successResponse(res, "Logout Successfully")
+  } catch (error) {
+    return apiResponse.ErrorResponse(res, error.message);
+  }
+}
 const verifyRegister = async (req, res) => {
   const cookieToken = req.cookies.temp_data;
   const userData = verifyToken(cookieToken, config.VERIFY_TOKEN_SECRET);
