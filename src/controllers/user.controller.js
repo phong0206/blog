@@ -419,4 +419,5 @@ module.exports = {
   revokeFriendRequest,
   acceptFriendRequest,
   unfriend,
+  logout
 };
